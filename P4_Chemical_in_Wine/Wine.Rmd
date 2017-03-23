@@ -1,0 +1,1175 @@
+---
+title: "Chemical Secrets in Wines"
+date: "18 Febuary 2017"
+author: "Hsin-Fang Hsu"
+output: 
+  html_document:
+    css: mystyle.css
+---
+## Motivation
+Wines are probably the most noble, romantic and healthy alcoholic drinks. 
+The taste of wine is very sophiscated: a distinct fragrance emerged from a mixed
+of sour, bitter, and astringent. Every bite can taste a bit different. 
+It's always difficult to describe the taste of wine, not to say to illustrate 
+the taste of good wines. Therefore, I am very excited to know that there exist 
+a data set that documented the chemical composition as well as the sensory 
+quality of wines. This would certainly be a great chance to reveal the mistery 
+of the taste of wines.   
+
+## Summary of the data set:
+The data set was originally from 
+[Vinho Verde](http://www.vinhoverde.pt/en/statistics#!), a chateau in Portugal. 
+They provide data for [red wines](https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityReds.csv) as well as [white wines](https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityWhites.csv). This allows me to explore the mysterious chemistry of taste in both wines. 
+Moreover, the direct comparsion of the analysis would also help us to understand 
+their difference. 
+
+These are the chemicals components or properties analyzed in the data set:
+
+It's worth to note that the units of measure in the [original file](https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityInfo.txt) 
+is mass per volumn (g/$\mathrm{dm}^3$ or mg/$\mathrm{dm}^3$). 
+As 1 mg/$\mathrm{dm}^3$ is known to be 1 [ppm (parts per million)](https://en.wikipedia.org/wiki/Parts-per_notation), 
+a common way to describe small concentrations, 
+I will convert all the units to ppm in this report.
+
+1. fixed.acidity (tartaric acid, ppm)
+2. volatile.acidity (acetic acid, ppm)
+3. citric.acid (ppm)
+4. residual.sugar (ppm)
+5. chlorides (sodium chloride, ppm)
+6. free sulfur dioxide (ppm)
+7. total sulfur dioxide (ppm)
+8. density (g/$\mathrm{cm}^3$)
+9. pH
+10. sulphates (potassium sulphate, ppm)
+11. alcohol (% by volume)
+
+The quality is rated with 0-10 value. 0 stands for worst and 10 is best.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages 
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(reshape2)
+library(DT)
+library(xtable)
+library(knitr)
+library(memisc)
+library(stringr)
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Load_the_Data}
+# Load the Data
+red_wine <- read.csv("wineQualityReds.csv")
+white_wine <- read.csv("wineQualityWhites.csv")
+```
+
+## Overview of the chemicals
+The main purpose is to find how different chemicals affect the wine quality. 
+A very simple approach would be just looking at the correlations coefficients 
+between quality and different chemicals. As we know, a positive correlation 
+coefficient would imply an improved quality and a greater value suggests higher 
+contribution. Let's first starts with the table for red wines.
+
+```{r kable_red_wine, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# calculate correlation between different chemicals
+red <- cor(red_wine[, !names(red_wine) == "X"])
+white <- cor(white_wine[, !names(white_wine) == "X"])
+# format of the table
+writeLines("
+table {
+    table-layout: fixed;
+    width: 900px;
+}
+
+td, th {
+  border: 1px solid #ccc;
+word-wrap: break-word;
+  text-align: center;
+}
+th {
+  background: lightblue;
+  border-color: white;
+}
+body {
+  padding: 1rem;
+}", con="mystyle.css")
+
+knitr::kable(red, format = "html", digits = 2, caption = "red wine")
+```
+
+
+Let's first focus on the row of quality. You can see that "fixed acidity" is 0.12, 
+suggesting that fixed acidity (in this case, tartaric acid), in general can 
+slightly improve the flavor of red wine. This is consistent with our knowledge 
+that [tartaric acid](https://en.wikipedia.org/wiki/Acids_in_wine#Tartaric_acid) 
+plays an important role in maintaining the chemical stability, color and taste 
+of the wine. Citric acid can add freshing flavors to the wine so the coefficient
+is also positive. The terrible smell from acetic acid (labeled as volatile acid here), 
+on the other hand, would decrease the quality of the wine. Sulfur dioxide[1](https://www.researchgate.net/publication/229310928_Oxidation_mechanisms_occuring_in_wines),[2](http://seniorchem.com/eei.html) is known as a good antimicrobial and a good 
+antioxidant, which is essential in maintaining the quality of the wine. 
+Therefore, the amount of added sulphate helps improve the quality (coefficient=0.25). 
+This is just a very rough way to guess the role of each components in affecting 
+the wine quality so very likely that only strong effects can be revealed. 
+
+The role of sugar, chlorides (here means sodium chlorides, i.e., salt) is not so 
+clear to me how it would affects the flavor. I mean, for sure the wine would be 
+disgusting if it's extremely salty or sweet. But it's certainly complicated to 
+know how slight variation between sugar and salt changes the taste. The value of
+pH and density is more like the summary of all chemicals. What matters should be 
+the composition of the solution (wine). To my surprise, the amount of alcohol 
+shows pretty high correlation with quality (0.47)!
+
+By looking at how these chemicals correlate with each other, we can also get a 
+brief overview of their chemical interactions with each other. As basic chemical 
+interactions would be quite similar for red and white wines, let's also look at 
+the table of white wine before we make conclusion. 
+
+```{r kable_white_wine, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# correlation coefficient table for white wine 
+knitr::kable(white, format = "html", digits = 2, caption = "white wine")
+```
+
+We can see some very strong correlations between fixed.acidity, citric acid and 
+pH values. It's reasonable as pH value mainly measures the amount of hydrogen 
+ions in the solution and acids are the main source releasing hydrogen ions. 
+Another strong correlation is between total.sulfur.dioxide and free.sulfur.dioxide. 
+As both of them are different forms of sulfur dioxide in the solutions[2](http://seniorchem.com/eei.html), it's not surprising that their 
+quantities are highly related. 
+
+Another effect that the mixture of alcohol with water would decrese the density 
+clearly demostrated by strong anti-correlation between Alcohol and density. 
+All the other components would contribute to higher density as their quantity 
+in the solution increases. 
+
+
+```{r final_data_set, echo=FALSE, message=FALSE, warning=FALSE}
+# Adjustment to the data: add new fields or change units 
+
+# add type: red or white
+red_wine$type <- factor('red')
+white_wine$type <- factor('white')
+
+# change unit to be consistent (always as ppm: g/dm^3)
+red_wine$free.sulfur.dioxide <- red_wine$free.sulfur.dioxide/1000
+red_wine$total.sulfur.dioxide <- red_wine$total.sulfur.dioxide/1000
+white_wine$free.sulfur.dioxide <- white_wine$free.sulfur.dioxide/1000
+white_wine$total.sulfur.dioxide <- white_wine$total.sulfur.dioxide/1000
+
+# add taste
+lab_taste <- c("bad", "average", "good")
+red_wine$taste <- cut(red_wine$quality, breaks = c(2, 4, 7, 9), 
+                      labels = lab_taste)
+white_wine$taste <- cut(white_wine$quality, breaks = c(2, 4, 7, 9), 
+                        labels = lab_taste)
+
+# add quality.id
+get_quality_id <- function(wine_in) {
+wine_in$quality.id <- wine_in$quality*10000 + wine_in$X
+wine_in <- wine_in[with(wine_in, order(quality.id)), ]
+wine_in$quality.id <- c(1:dim(wine_in)[1])
+return(wine_in)
+}
+red_wine <- get_quality_id(red_wine)
+white_wine <- get_quality_id(white_wine)
+white_wine$quality.id <- white_wine$quality.id + dim(red_wine)[1]
+
+# convert quality to factor
+red_wine$quality <- factor(red_wine$quality)
+white_wine$quality <- factor(white_wine$quality)
+
+## create final data set: wine
+wine <- rbind(red_wine,white_wine)
+
+```
+
+
+## Overview of the data:
+
+### Quality of red and white wines
+```{r fig.width=10, fig.height=3, echo=FALSE, message=FALSE, warning=FALSE}
+# Quality distribution of red and white wines
+# table summary:
+# by(wine$quality,wine$type,table)
+# plot
+ggplot(aes(x = quality, fill = type), data = wine)+
+        geom_histogram(binwidth = 1, stat = "count")+
+        facet_wrap(~type, scales = "free_y")+
+        labs(title = "Distribution of wine quality")
+```
+
+The quality distribution seems to be similar in red and white wines. 
+The quality levels of most of the wines are 5-7. 
+Around 4% wines with quality level 3-4. 
+1% red wine are with quality level 8 and 3.6% white wines have quality level 8. 
+The best level for red wine is 8 and for white wime is 9 (only 0.1%). 
+Considering the fact that it's probably difficult to distinguish 
+quality level$\pm$1, I decided to simplfy the quality levels to "good", 
+"average" and "bad" by creating another field, "taste". It's actually not 
+difficult to convert the current quality levels to three categories descrbing 
+"taste": as current quality levels reported are in the range of 3-9, we can 
+simply assign quality level 5-7 as "average", the lowest two quality levels 
+(3-4) as "bad" and the highest two quality levels (8-9) as "good".  
+
+### The distribution of taste
+```{r fig.width=10, fig.height=3, echo=FALSE, message=FALSE, warning=FALSE}
+taste_data <- wine[, c("type", "taste")]
+ggplot(aes(x = taste), data = taste_data)+
+        geom_histogram(aes(fill = taste), stat = "count")+
+        scale_y_log10(breaks = c(20, 60, 200, 1500, 4400))+
+        facet_wrap(~type)+
+        labs(title = "Distribution of wine taste (good, average, bad)")
+
+                
+```
+
+You can see that average wines are the majority of wines. Out of 4898 white wines,
+180 of them are good wines ($3.67~\%$) and 183 of them are bad wines ($3.73~\%$).  
+Out of 1599 red wines, only 18 are good ($1.13~\%$) and 63 are bad ($3.94~\%$). 
+This tells us that it seems to be more difficult to have good quality of red wines. 
+Moreover, the small amount of good red wines probably wont't provide enough  information 
+for the exploration of red wines.  
+
+### Overview of the distribution of different chemicals in red and white wines:
+Before we dive into more details about each compenents, I would like to first have a brief view about how these components distribute in red and white wines.  I think box plots are the best way of showing all of these in one figure. The median, first quantile and third quantile from the box itself, already give us some idea about the distribution of the data. We can also see how many extreme values are there and how extreme they are. The side by side comparison between red and white wines particularly point out their difference. All these extreme points will be excluded from the plots exploring deeper about these components later on for better visualization and understanding. Therefore, I think it's a great point to show the figure here.  
+
+```{r fig.width=10, fig.height=6, echo=FALSE, message=FALSE, warning=FALSE}
+ana_fileds <- c("fixed.acidity", "volatile.acidity", "citric.acid", 
+                "residual.sugar", "chlorides", "free.sulfur.dioxide", 
+                "total.sulfur.dioxide", "sulphates", "type") 
+ana_wine <- wine[, ana_fileds]
+wine_boxplot <- melt(ana_wine, id.vars = "type")
+ggplot(data = wine_boxplot, aes(factor(1), value)) +
+  geom_boxplot(aes(color = type)) +  
+  facet_wrap(~variable,scales = "free", ncol = 4)+
+   labs(y = "Concentration (ppm)", 
+        title = "Brief overview of distributions of different chemicals")+
+   theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank())
+  
+# ttest
+```
+
+
+
+```{r ttest, echo=FALSE, message=FALSE, warning=FALSE}
+test_var <- 'pH'
+ttest_chlorides <- t.test( +
+                        wine[wine$type == "red", test_var], +
+                        wine[wine$type == "white", test_var])
+t_value <- ttest_chlorides$p.value 
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+## Chemical compositions in red and white wines:
+# property_wine <- wine[, c("type","density","pH","alcohol")]
+# melt_property_wine <- melt(property_wine, id.vars="type")
+# ggplot(aes(x=value),data=melt_property_wine)+
+#         geom_histogram(aes(fill=variable,color=I("black")), bins=30)+
+#         facet_grid(type~variable, scales="free")+
+#         labs(x=expression(paste("density is ", g/cm^{3})))
+
+# Two sample t-test shows that all distribution (density, pH and alcohol) 
+# of red wines are significantly different from that of white wines (p-value<0.01). 
+# In general, the density, pH values and alcohol quantity are all lower for 
+# white wines.
+```
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, functions_used_in_the_section}
+# function: exclude outlier by quantile
+get_clean_data <- function(data_in, features, upper_limit, lower_limit = 0){
+        cond <- 1
+        g_data <- data_in[, features]
+        g_u_range <- sapply(g_data, quantile, probs = upper_limit)
+        g_l_range <- sapply(g_data, quantile, probs = lower_limit)
+
+        for (i in 1:length(features)){
+                logic_current <- (data_in[features[i]] >= g_l_range[i]) & +
+                        (data_in[features[i]] <= g_u_range[i])
+                cond <- cond*logic_current
+        }
+        cond <- as.logical(cond)
+        g <- data_in[cond, ]
+        return(g)
+}
+
+
+```
+```{r functions_summary, echo=FALSE, message=FALSE, warning=FALSE}
+get_sta_names <- function(column1){
+        # remove na
+        column1 <- column1[!is.na(column1)]
+        # remove all spaces
+        column1 <- gsub("\\s","", column1)
+        return(str_extract(column1, "[a-zA-Z0-9]+"))
+}
+
+clean_table <- function(table_in){
+        num_sta <- dim(table_in)[1] 
+        num_fields <- dim(table_in)[2]
+        # get all names of statistics
+        sum_names <- get_sta_names(table_in[, 1])
+        # get values by row
+        sum_martix <- matrix(0, nrow = num_fields, ncol = num_sta)
+        for (i in 1:num_sta) {
+                p <- table_in[i, ]
+                p <- gsub("\\s","", p)
+                col_loc <- str_locate(p,'[\\:]')[1]+1
+                sum_martix[, i] <- sapply(p,
+                                function(x) substr(x, col_loc, nchar(x)))
+        }
+        sum_martix <- data.frame(sum_martix)
+        names(sum_martix) <- sum_names
+        return(sum_martix)
+        
+}
+
+# make one variable summary table pretty
+preety_table <- function(table_summary, name_in){
+        p <- data.frame(table_summary)
+        p$levels <- rownames(p) 
+        names(p)[1] <- name_in
+        return(p)
+}
+```
+
+Another way to show the distribution (besides histogram) is a summary table. It shows similar information as the box plot but you can see actual numbers in the summary table. 
+
+
+### Summary of each components
+#### numerical data
+```{r summary_num, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# summary of numerical data
+sum_table <- summary(wine[, !names(wine) %in% 
+                        c('X', 'quality.id', "quality", "taste", "type")])
+sum_matrix <- clean_table(sum_table)
+numerical_list <- c('fixed.acidity', "volatile.acidity", "citric.acid",
+                    "residual.sugar", "chlorides", "free.sulfur.dioxide",
+                    "total.sulfur.dioxide", "density", "pH", "sulphates", "alcohol")
+rownames(sum_matrix) <- numerical_list
+knitr::kable(sum_matrix, format = "html", digits = 2, caption = "Summary of chemical components")
+```
+
+From the box plots and the summary table, you can see that: red wine shows more 
+fixed and volatile acidity than white wine. But most white 
+wines show higher citric acid than red wines. In general, the amount of residual
+sugar is also higher in white wines, which also agrees with our experience. 
+On the other hand, the free as well as fixed sulfur dioxide value are much higher 
+in white wine. White wines show lower addictive sulphates. 
+
+It's worth to point out that all the chemicals analyzed here are significanly 
+different in red and white wines (2 sample t-test, all showing p-values<0.01), 
+suggesting the distinct composition of red and white wines.
+
+
+
+#### categorical data
+```{r summary_quality, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# summary of quality
+# print("Quality Summary:")
+quality_count <- summary(wine[, c("quality")])
+sum_quality <- data.frame(quality_count)
+kable(sum_quality)
+```
+
+```{r summary_taste, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# print("Taste Summary:")
+taste_count <- summary(wine[, c("taste")])
+sum_taste <- data.frame(taste_count)
+kable(sum_taste) 
+```
+
+```{r summary_type, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# print("Type Summary:")
+type_count <- summary(wine[, c("type")])
+sum_type <- data.frame(type_count)
+kable(sum_type)
+```
+
+You can see that we have three times more data on white wines than red wines. 
+Most wines are in the middle quality level (5, 6) and average taste. 
+Wines with great or poor qualities are comparatively rare. 
+
+## Individual group exploration  
+
+Based on the correlations and some common sense, we can probably group these 
+chemical into 4 types:
+
+1. acidity related: fixed.acidity, volatile.acidity, citric acid
+2. sulfur related: total.sulfur.dioxide, free.sulfur.dioxide, sulfates
+3. composition related: density, pH
+4. others: sugar, chlorides, alcohol
+
+I would explore the data by these groups.
+
+### Sulfur related groups:
+
+```{r fig.width=10, fig.height=6, echo=FALSE, message=FALSE, warning=FALSE}
+sulfur_fields <- c("total.sulfur.dioxide", "free.sulfur.dioxide", "sulphates")
+id_fields <- c("X", "type", "quality", "quality.id", "taste")
+chemical <- wine[, c(sulfur_fields, id_fields)]
+# remove outlier
+chemical <- get_clean_data(chemical, sulfur_fields, 
+                           upper_limit = 0.99, lower_limit = 0)
+melt_chemical <- melt(chemical, id.vars = id_fields)
+
+myfunction <- function(var, string) {
+  print(var)
+  print(string)
+  result <- paste(as.character(string),'_new', sep = "")
+  return(result)
+}
+
+ggplot(aes(x = value, fill = quality, color = I("black")), data = melt_chemical)+
+        geom_histogram(bins = 30, alpha = 0.5) +
+        scale_y_log10() +
+        facet_grid(type~variable, scales = "free") +
+        labs(y = "Count", x = "Concentration (ppm)", 
+             title = "Distribution of sulfur related components")
+
+```
+
+Considering the fact that only few good red wines in the data set, we will 
+explore the plots by coloring according to different quality level. 
+You can see that good red wines usually have smaller amount of total.sulfur.dioxide, 
+suggesting a high total.sulfur.dioxide would worsen the quality of red wine. 
+However, the most of good white wines show similar amount of total.sulfur.dioxide 
+as bad red wines, demonstrating that the tastes of red and white wines 
+are very differents. 
+
+
+```{r fig.width=10, fig.height=3, echo=FALSE, message=FALSE, warning=FALSE, sulfur_traces}
+ggplot(aes(x = X, y = value, color = variable), data = melt_chemical)+
+        geom_line(alpha = 0.8)+
+        scale_y_log10()+
+        scale_x_continuous(limits = c(0,100))+
+        facet_wrap(~type)+
+        labs(x = "Index for different wines", y = "Concentration (ppm)",
+             title = "Comparison of sulfur related chemicals in 100 wines")
+
+# 
+# ggplot(aes(x=quality.id,y=value),data=chemical)+
+#         geom_line(aes(color=factor(taste)))+
+#         geom_smooth()+
+#         facet_grid(variable~type, scales = "free")
+
+```
+
+Here I plotted the amount of free.sulfur.dioxide, total.sulfur.dioxide and the 
+additive, sulphates in different wines. X axis is the index of each wine. 
+To have a  clear view, here we just look at the first 100 red wines and 100 
+white wines. This plot allows us to see how these three components change with 
+each other. You can see that the amount of free.sulfur.dioxide show quite 
+similar trend as the the amount of total.sulfur.dioxide. 
+Their correlation coefficient (about 0.6 for red or white wines) is consistent 
+with our observation. So we can probably regard  "total.sulfur.dioxide" and 
+free.sulfur.dioxide as the sulfur components produced in the natural process. 
+The sulphates is the amount of sulfur added artificially. Now let's look at how 
+adding sulphats depends on the amount of natual sulfur. To make the difference 
+clear, let's only look at good and bad wines.
+
+
+```{r fig.width=10, fig.height=4, echo=FALSE, message=FALSE, warning=FALSE, Scattered_plot}
+# only look at good and bad
+extreme_wine <- chemical[chemical$taste %in% c("good", "bad"), ]
+# create a new feature by averaging free.sulfur.dioxide and total.sulfur.dioxide
+extreme_wine$nature <- 0.5 * (extreme_wine$free.sulfur.dioxide+ +
+                              extreme_wine$total.sulfur.dioxide)
+# data exclude top 1%
+extreme_wine99 <- get_clean_data(extreme_wine, 
+                c("total.sulfur.dioxide", "sulphates"), 0.99, lower_limit = 0)
+# plot
+ggplot(aes(x = nature*1000, y = sulphates,color=taste), data = extreme_wine) +
+        geom_point(alpha = 0.4)+
+        scale_fill_brewer(type = 'div')+
+        labs(y = "Sulphates added (ppm)", x = "Natural sulfur dioxide (ppb)",
+             title = "Relation between added and natual sulfur chemicals")+
+        facet_wrap(~type, scales = "free")
+
+```
+
+It seems like good red wines add more sulphates than bad red wines, especially 
+under low natural sulfur dioxide. Wines having extreme high added sulphates and 
+total sulfur dioxide are most bad wines. A gengeral rule seems to be having the 
+added sulphates below 1 ppm. The range of nature sulfur dioxide is $0.01-0.06$ 
+ppb for good red wine and $0.04-0.13$ ppb for good white wine. The natural sulfur 
+range for Good white wine is narrower than bad white wines. However, the scatters 
+of good and bed white wines are overlaps quite a lot, suggesting that the amount 
+of sulfate related chemical alone cannot determine the quality of white wine.
+
+
+### Acidity
+From the box plot we know that both fixed.acidity and volatile.acidity are higher 
+in red wines. But white wines seem to have higher citric.acid, the flavor to make 
+you feel fresh. Let's have a closer look at how the distributtions of these acids 
+vary in wines with different qualities.   
+
+```{r fig.width=10, fig.height=6, echo=FALSE, message=FALSE, warning=FALSE,}
+acid_fields <- c("fixed.acidity", "volatile.acidity", "citric.acid")
+acid <- wine[, c(acid_fields, id_fields)]
+# remove outlier
+acid <- get_clean_data(acid, acid_fields, 
+                           upper_limit = 0.99, lower_limit = 0)
+melt_acid <- melt(acid, id.vars = id_fields)
+ggplot(aes(x = value,fill = quality,color = I("black")),data = melt_acid)+
+        geom_histogram(bins = 30, alpha = 0.5)+
+        scale_y_log10()+
+        labs(x = "Concentration (ppm)", 
+             title = "Distribution of acid related chemicals")+
+        facet_grid(type~variable, scales = "free")
+        
+```
+
+Even though the sample sizes of white wines are almost three times more than that 
+of red wines, the distributions in fixed.acidity (i.e., tartaric acid) and 
+volatile.acidity (i.e., acetic acid) clearly narrower for white wines. 
+Compared to red wines, white wines show similar but more centered distribution 
+of citric acid. Most red wines actually have less citric acid than white wines. 
+This kind of explains the totally different taste between red and white wines: 
+red wines seem to have mixing taste of sour, bitter and astringent, 
+whereas white wines seem to be more refreshing.    
+
+You can see clearly that the distribution gets broader and the mean gets larger 
+as the quality decreases in the volatile acidity. The range of distribution in 
+fixed.acidity and citric acid of red wines are the same for different qualities. 
+This suggests that the control of acetic acid is critical for the quality of red wines. 
+This actually make sense, considering of the unpleasant smell from acetic acid. 
+On the other hand, you can also see this boradening-distribution phenomennon for 
+the citric acid distribution in white wines. Therefore, it is citric acid that 
+controls the quality of white wines. It's worth to note that the values of 
+fixed acidity and volatile acidity become larger for worse white wines. 
+Therefore, even though the range of these two acids are not so critical, 
+too much of them would still destroy the quality.
+
+
+
+### Sugar and Salt 
+We all know that the balance between sugar and salt is important for tasty food. 
+How about wines? Besides salt, sugar also plays an important role in balancing sour. 
+What would sugar relates with acids in wines? 
+
+First let's look at the amount of sugar and salt in wines with different qualities. 
+I tried to color by different quality levels but it didn't provide more information. 
+Let's keep it simple by just looking at three taste levels: bad, average and good.
+
+```{r fig.width=10, fig.height=6, echo=FALSE, message=FALSE, warning=FALSE, sugar_related}
+# sugar_related_data
+sugar_fields <- c("residual.sugar", "chlorides", "citric.acid")
+sugar <- wine[, c(sugar_fields, id_fields)]
+# exclude extreme data
+sugar <- get_clean_data(sugar, sugar_fields, 0.99, 0.01)
+melt_sugar <- melt(sugar[, !names(sugar) == "citric.acid"], id.vars = id_fields)
+# data exclude average
+good_bad_sugar <- melt_sugar[melt_sugar$taste != "average", ]
+
+# plot histogram
+ggplot(aes(x = value, fill = taste, color = I("black")), data = melt_sugar)+
+        geom_histogram(bins = 30, alpha = 0.5)+
+        scale_y_log10()+
+        facet_grid(type~variable, scales = "free")+
+        labs(x = "Concentration (ppm)", y = "Count", 
+             title = "Distribution of sugar and salt")
+```
+
+The amount of sugar is almost 100 times higher than the amount of salt,
+which probably explains why we never feel salty for the wines.  
+It's interesting to note that the distribution of good wines actually more 
+similar as bad wines than average wines, suggesting that sugar and salt are 
+uncritical in determining the quality of wines.
+
+Now let's have a closer look at how salt and sugar as well as sugar and acids 
+are balanced in wines with different qualities. 
+
+```{r fig.width=10, fig.height=4, echo=FALSE, message=FALSE, warning=FALSE}
+# plot- sugar and salt
+ggplot(aes(x = chlorides, y = residual.sugar), data = sugar)+
+        geom_point(aes(color = taste), alpha = 0.9)+
+        facet_wrap(~type, scales = "free_y")+
+        labs(x = "Chlorides (ppm)", y = "Residual sugar (ppm)",
+             title = "Relation between sugar and salt")
+```
+
+Good white wines show much limited range of salt (i.e., chlorides) than average 
+and bad white wines but the range of sugar is less critical. 
+The amount of sugar is much higher in white wines than red wines but the salt 
+concentration is usually higher in red wines. This provides another evidence 
+supporting the difference in tastes between red and white wines. 
+
+
+```{r fig.width=10, fig.height=4, echo=FALSE, message=FALSE, warning=FALSE}
+# plot- sugar and acid
+ggplot(aes(x = citric.acid, y = residual.sugar), data = sugar)+
+        geom_point(aes(color = taste), alpha = 0.9)+
+        facet_wrap(~type, scales = "free_y")+
+        labs(x = "Citric acid (ppm)", y = "Residual sugar (ppm)", 
+             title = "Relation between sugar and citric acid")
+# # plot- salt and acid
+# ggplot(aes(x=chlorides,y=citric.acid),data=salt_citric99)+
+#         geom_point(aes(color=taste), alpha=0.9)+
+#         facet_wrap(~type, scales = "free_y")+
+#         labs(xlab="")
+```
+
+It's interesting to note that the shape of the scattered data is very different 
+for red and white wines: red wines scattered horizontally v.s. white wines 
+scattered vertically, indicatin totally different critical components. 
+It's important to control the sugar amount in red wines but the amount of 
+citric acid is unimportant (good red wines show similar citric acid range as 
+average and bad red wines). It's the other way around for white wines: good wines 
+particularly show narrower range of citric acid than worse wines but the range 
+of sugar doesn't matter. 
+
+This observation is quite different from what I had in mind but seems to be 
+reasonale after some thoughts. The stereotype of red wines would never be sweet. 
+It's sour in a complicated way. White wines, on the other hand, 
+can be quite sweet and still taste good. 
+
+
+
+### Alcohol
+```{r fig.width=10, fig.height=6, echo=FALSE, message=FALSE, warning=FALSE, alcohol_histogram}
+alcohol <- wine[, c("alcohol", id_fields)]
+p <- ggplot(aes(x = alcohol, fill = quality, color = I("black")), data = alcohol)+
+         geom_histogram(bins = 30, alpha = 0.5)+
+         facet_wrap(~type, scales = "free")+ 
+         labs(x = "Alcohol (% vol)", title = "Distribution of alcohol concentration")
+p_log <- p+scale_y_log10()
+grid.arrange(p, p_log, ncol = 1)
+```
+
+I don't know if anyone noticed, but I always plotted the y axis of histograms 
+with log scale. Finally we only look at the distribution of alcohol alone, 
+let me show you why. The first row shows the histograms with normal scale in 
+the y axis and the first row shows the same histograms but with log scale in the 
+y axis. The very small amount of good wines is very difficult to see with normal 
+scales. The shape of distributions change as we changed the y scale but it doesn't 
+matter for comparison among different quality groups.
+
+The distribution of alcohol doesn't seem to be very different based on their quality. 
+
+```{r fig.width=10, fig.height=6, echo=FALSE, message=FALSE, warning=FALSE, alcohol_traces}
+# changes with quality
+ggplot(aes(x = quality.id, y = alcohol), data = alcohol)+
+        geom_point(aes(color = factor(quality)))+
+        geom_line(aes(color = factor(quality)))+
+        geom_smooth()+
+        facet_wrap(~type, ncol = 1, scales = "free")+
+        labs(x = "Index for each wine", y = "Alcohol (% vol)",
+             title = "Relation between alcohol concentration and wine quality")
+
+```
+
+However, if we plot the amount of alcohol for all wines sorted by their quality, 
+you can see clearly an increasing trend for both red and white wines. I also 
+looked at this kind of plots for all the other variables but none of them showed 
+any clear trend in different quality levels. This confirms the high correaltion 
+between alcohol and qualiity we observed in the very beginning. As alcohol came 
+from wine fermentation, more alcohol might imply a maturer fermentation process, 
+which in general leads to a better taste. 
+
+
+
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, functions_used_in_final_plots}
+# --------- functions for golden ratio ------------------- #
+# select data
+get_selected_data <- function(quality_level, fields, 
+                              data_in, quality_type = "taste") {
+        # quality_level: the chosen quality. Default is the levels of taste: 
+        # good, average, bad. If you want to select quality, 
+        # then need to change the quality_type to "qality".
+        # fields: the fields want to be selected
+        # data_in: the dataframe
+        cond <- 1
+        out_array <- array(0, dim(data_in))
+        selected_rows <- data_in[quality_type] == quality_level
+        g_data <- data_in[selected_rows, fields]
+        # g_u_range <- sapply(g_data,max)
+        # g_l_range <- sapply(g_data,min)
+        g_u_range <- sapply(g_data, quantile,probs = 0.99)
+        g_l_range <- sapply(g_data, quantile,probs = 0.01)
+
+        for (i in 1:length(fields)){
+                logic_current <- (data_in[fields[i]] >= g_l_range[i]) & 
+                                (data_in[fields[i]] <= g_u_range[i])
+                cond <- cond*logic_current
+        }
+        cond <- as.logical(cond)
+        g <- data_in[cond, ]
+        return(g)
+}
+
+# rbind all coeeficient matrix
+get_whole_correlation_matrix <- function(data_set, fields_in, type_in){
+        # this will rbind all coeeficient matrix
+        # will include:
+        # taste: good, average, bad
+        taste_list <- c("good", "average", "bad")#
+        i <- 0
+        for (taste_in in taste_list){
+                # get correlation
+                ana_data <- data_set[data_set$taste == taste_in, fields_in]
+                cor_data <- cor(ana_data, method = "pearson")
+
+                temp_c <- get_coeff_matrix(cor_data)
+                temp_c$taste <- taste_in
+                temp_c$type <- type_in
+
+                if (i==0){
+                        df <- temp_c
+                } else {
+                        df <- rbind(df, temp_c)
+                }
+                i <- 1
+        }
+
+        return(df)
+}
+
+# input data frame to get correlation coefficients
+get_coeff_matrix <- function(data_in){
+        a <- data.frame(data_in)
+        rownames(a) <- letters[1:11]
+        names(a) <- letters[1:11]
+        a$X <- letters[1:11]
+        melt_a <- melt(a, id.vars = "X")
+        melt_a$Xid <- paste(melt_a$X, melt_a$variable, sep = "")
+        melt_a$Xid <- sapply(melt_a$Xid, 
+                function(c) paste(sort(unlist(strsplit(c, ""))), collapse = ""))
+        melt_a <- melt_a[, c("Xid","value")]
+        c <- group_by(melt_a,Xid) %>% summarise(mean(value))
+        c <- c[c$`mean(value)` != 1, ]
+        c$Xid <-sapply(c$Xid, add_sep)
+        return(c)
+}
+
+# add hyphtn to separate two components
+add_sep <- function(x) {
+        q <- c(strsplit(x,split = ""))[[1]]
+        out <- paste(q[1], q[2],sep = "-")
+        return(out)
+}
+
+# convertion table
+get_conversion_table <- function(old_name){
+     list_convert <- data.frame(letters[1:11])
+        names(list_convert) <- "letter"
+        list_convert$component <- old_name
+        return(list_convert)
+}
+# -------------- end of functions for golden ratio--------------------- #
+
+# -------------- function for source of pH ---------------------------- #
+# main functions 
+# to get data containing r-square values for all types and tastes of wine 
+get_whole_r_matrix <- function(taste_list,type_list,data_ana) {
+        i <- 0
+        for (taste_in in taste_list){
+                for (type_in in type_list){
+                   a <- get_r_matrix(taste_in, type_in, data_ana)
+                   if (i == 0){
+                           df <- a
+                   } else {
+                           df <- rbind(df, a)
+                   }
+                   i <- 1
+                }
+        }
+        return(df)
+}
+
+# make the r-squares values into a dataframe
+get_r_matrix <- function(taste_in, type_in, data_ana){
+        if (data_ana == "wine_acid"){
+                data_in <- wine_acid[(wine_acid$taste == taste_in) &
+                                     (wine_acid$type == type_in), ]
+                r2 <- get_r2(data_in)
+        } else {
+                data_in <- wine[(wine$taste == taste_in) &
+                                (wine$type == type_in), ]
+                r2 <- get_r2_multi_lm(data_in)
+        }
+        out_df <- data.frame(r2)
+        out_df$type <- type_in
+        out_df$taste <- taste_in
+        out_df$Rid <- c(1:6)
+        return(out_df)
+}
+
+# get r-square values
+# consider 100% deprotonization (releasing H+ ions)
+get_r2 <- function(data_in){
+        m1 <- lm(exp(-pH)~fixed.acidity, data = data_in)
+        r1 <- summary(m1)$r.squared
+        m2 <- lm(exp(-pH)~citric.acid, data = data_in)
+        r2 <- summary(m2)$r.squared
+        m3 <- lm(exp(-pH)~sulphates, data = data_in)
+        r3 <- summary(m3)$r.squared
+        m4 <- lm(exp(-pH)~volatile.acidity, data = data_in)
+        r4 <- summary(m3)$r.squared
+        m5 <- lm(exp(-pH)~total.sulfur.dioxide, data = data_in)
+        r5 <- summary(m5)$r.squared
+        m6 <- lm(exp(-pH)~chlorides, data = data_in)
+        r6 <- summary(m6)$r.squared
+        return(c(r1,r2,r3,r4,r5,r6))
+}
+
+# get r-square values
+# multi-component linear regression
+# the coefficients for each variables 
+# can be regarded as the coefficients of deprotonization
+get_r2_multi_lm <- function (data_in){
+        m1 <- lm(I(exp(-pH))~fixed.acidity, data = data_in)
+        r1 <- summary(m1)$r.squared
+        m2 <- update(m1, ~ . + citric.acid)
+        r2 <- summary(m2)$r.squared
+        m3 <- update(m2, ~ . + sulphates)
+        r3 <- summary(m3)$r.squared
+        m4 <- update(m3, ~ . + volatile.acidity)
+        r4 <- summary(m4)$r.squared
+        m5 <- update(m4, ~ . + total.sulfur.dioxide)
+        r5 <- summary(m5)$r.squared
+        m6 <- update(m5, ~ . + chlorides)
+        r6 <- summary(m6)$r.squared
+        # a <- mtable(m1, m2, m3, m4, m5, m6, summary.stats = "R-squared")
+        # a
+        return(c(r1,r2,r3,r4,r5,r6))
+}
+```
+
+
+## Further exploration
+### Source of pH
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, ph_distribution}
+# pH <- wine[, c("pH", id_fields)]
+# ggplot(aes(x=pH,fill=quality,color=I("black")),data=pH)+
+#          geom_histogram(bins = 30, alpha=0.5)+
+#          facet_wrap(~type, scales="free")
+
+```
+
+The distribution of pH is simialr and ranges around $3-3.5$ for both red and 
+white wines. The low pH came from their composition of many acids 
+(e.g., tartaric acid, citric acid, acetic acid) or components that can be acid 
+sources (e.g., sulfates, sulfur dioxides) in the chemicals listed in the data. 
+So far we know how the amount of different acids changes in red and white wines 
+of different qualities. But can we identify which acid is most crucial 
+to the quality of wine?
+
+I would try to do this by investigating the contribution of different acids to 
+the pH value. The value of pH is the quantified value defining the acidity. 
+As the definition of pH value is $-\log[H^+]$, we can expect to see a linear 
+relation between $\exp(-pH)$ and the amount of acids. So what I did was: 
+I grouped the wines according to their type (white, red) and 
+taste (good, average, bad), did linear regression between acid and pH value and 
+finally I used the $R^2$ value as indicator of the fitting. I did this for 
+different types of acids:  "fixed.acidity", "citric.acid", "sulphates", 
+"volatile.acidity", "total.sulfur.dioxide". I increased the variable for the 
+linear regression by gradually adding acid (with the order above) into the 
+fitting of linear regression. This means, fiexed.acidity was the first acid in 
+the linear regression and it was a single variable linear regression. 
+The total.sulfur.dioxide is the last acid added in the linear regression and 
+it was a linear regression with 5 variables. I also added "chlorides", 
+which supposed to be a neutral ion having no effect in the pH value.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, source_of_pH}
+acid_source <- c("fixed.acidity", "citric.acid", "sulphates", "volatile.acidity",
+                 "total.sulfur.dioxide", "chlorides")
+acid_x <- c('type', "taste", "pH")
+wine_acid_cum <- data.frame(t(cumsum(data.frame(t(wine[, acid_source])))))
+wine_acid <- cbind(wine_acid_cum, wine[acid_x])
+melt_wine_acid <- melt(wine_acid, id.vars = acid_x)
+# scatter plot1
+# ggplot(aes(x=pH,y=value,color=variable),data=melt_wine_acid)+
+#         geom_point(alpha=0.5)+
+#         geom_smooth(method="lm",se=FALSE)+
+#         facet_grid(taste~type)
+# scatter plot2
+# ggplot(aes(x=exp(-pH),y=value,color=taste),data=melt_wine_acid)+
+#         geom_point(alpha=0.5,size=0.5)+
+#         geom_smooth(method="lm",se=FALSE)+
+#         facet_grid(variable~type)
+```
+
+##### Different acid contribution revealed by the r-square value of linear regression
+```{r fig.width=10, fig.height=4, echo=FALSE, message=FALSE, warning=FALSE, correlation_Functions}
+# type and tase list for the R-square value data
+type_list <- c("red", "white")
+# data containing r-sqare values with the taste and type listede above
+wine_r100 <- get_whole_r_matrix(lab_taste, type_list, "wine_acid")
+wine_r <- get_whole_r_matrix(lab_taste, type_list, "wine")
+
+# p100 <- ggplot(aes(x=Rid,y=r2,color=taste,group=taste),data=wine_r100)+
+#         geom_point()+geom_line()+
+#         facet_wrap(~type, scales="free")+
+#         labs(title="R-square: 100% acid conversion")
+ggplot(aes(x = Rid,y = r2, color = taste, group = taste), data = wine_r)+
+        scale_x_continuous(breaks = c(1:6), labels = acid_source)+
+        geom_point()+
+        geom_line()+
+        facet_wrap(~type, scales = "free")+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+        labs(x = "",y = expression(paste(R^{2}))) 
+# grid.arrange(p100,p,ncol=1)
+```
+
+A high r-square value (R2) suggests that we included enough sources of acid to 
+account for the pH value. You can see in the case of red wines, tartaric acid 
+contributes to almost $70~\%$ of the acid source. Volatile acidity and 
+total sulfur together contribute to another $10~\%$. Bad red wines show quite 
+different acid composition: tartaric acid only contribute to 
+about $40~\%$ of acidity, citric acid and sulphates together add about $30~\%$ more. 
+Tartaric acid is also the main acid source of average red wines. 
+The slight increase in the r-square value after including chlorides might 
+due to the increased number of fitting variables or some complicated but not so 
+significant chemistry in the wine. 
+
+The fitting of white wines are much poorer, suggesting these acids analyzed here 
+are not the dertermining factors for the acidity in white wines. We can still 
+have a brief understanding about the roles of the acids listed here: tartaric 
+acid still the top contributors in the acids listed here. Sulphates also contributes 
+quite a bit in all the wines. It's very interesting to note that the shape of 
+bad white wines looks the same as the shape of good red wines, which again 
+confirms the very different taste of red and white wines. 
+
+As there are still many acid sources in the wines (e.g., Malic acid, Lactic acid), 
+the r-square value could probably be improved by including more completed source 
+of acids or using a more complicated model (e.g, by considering the dissociating 
+rate of acid).
+
+
+
+###  Secret of good wines - the golden ratio?
+
+As you probably noticed from the scatter plots above, many bad wines actually 
+show the same scatters as good wines. This means, controlling the range of these 
+chemical components dones't guarantee the good quality. Probably there are some 
+golden ratios for different combination of chemicals. What can we do to know 
+something about this?
+
+What I tried to do was, based on the range of different chemicals in good wines, 
+I removed data that not in the range. This leads to 3112 out of 4898 white wines 
+and 185 out of 1599 red wines. We can further investigate the reasons separating 
+good and bad wines with these data, as thees wines all have chemical components 
+within the "great range" (the range for good wines). Then I calculated the 
+correlation coefficients of each pair of chemicals in different taste groups 
+(good, average and bad wines) and for different types (red and white wines). 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, number_of_good_white_wines}
+# sum(good_white_wine$taste=="good")
+```
+
+##### Pair correlations of different chemicals 
+##### (for wines showing all chemical components in the same range as good wines) 
+```{r fig.width=10, fig.height=8, echo=FALSE, message=FALSE, warning=FALSE, correlation_coefficients_analysis}
+# analysis
+# get wine data only including all variables in the same range as good wines
+excluded_fields <- c("quality", "quality.id", "taste", "X", "type")
+fields_in <- names(wine)[! names(wine) %in% excluded_fields]
+good_red_wine <- get_selected_data("good", fields_in, 
+                                           red_wine, quality_type = "taste")
+good_white_wine <- get_selected_data("good", fields_in, 
+                                           white_wine, quality_type = "taste")
+
+# correaltion matrix
+red_wine_corr <- 
+        get_whole_correlation_matrix(good_red_wine, fields_in, "red")
+white_wine_corr <- 
+        get_whole_correlation_matrix(good_white_wine, fields_in, "white")
+
+wine_corr <- rbind(red_wine_corr,white_wine_corr)
+names(wine_corr)[2] <- 'value'
+# remove na
+wine_corr <- subset(wine_corr, !is.na(wine_corr$value))
+
+# plot_red wine
+red_plot <- ggplot(aes(x = Xid, y = value), 
+                data = wine_corr[wine_corr$type == "red", ])+
+                geom_point(aes(color = taste))+
+                geom_line()+
+                theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+                labs(title = "red wine", x = "", y = "Correlation coefficient")
+# plot_red wine
+white_plot <- ggplot(aes(x = Xid, y = value), 
+                data = wine_corr[wine_corr$type == "white",])+
+                geom_point(aes(color = taste))+
+                geom_line()+
+                theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+                labs(title = "white wine", x = "", y = "Correlation coefficient")
+grid.arrange(red_plot,white_plot, ncol = 1)
+```
+
+```{r conversion_table, echo=FALSE , results='asis'}
+knitr::kable(t(get_conversion_table(fields_in)), format = "html")
+```
+
+This plot allows us to see the how the correlation in different chemicals varies
+for good and bad wines. We can know the variation of different quality of taste 
+simply by looking at the length of the black lines, as the black lines link the 
+largest and the smallest correlation coefficients.
+
+The difference between different taste quality groups are much smaller in white 
+wines, suggesting the critical role of details in deciding the quality of white 
+wines. About $64~\%$ white wines with all components in the same range of good
+wines but only $3~\%$ of them are actually good wines. On the contrary, 
+the composition of bad red wines are quite different from good red wines 
+so there is no bad red wines reach all the criteria of good red wines.
+
+The variations are large and with the same trend in white and red wines are: 
+anti-correlation between fixed.acidity and alcohol (a-k), anti-correlation 
+between volatile acidity and density (b-h), correlation between volatile.acidity 
+and alcohol (b-k). The variations are large and with the oppisite trend in white 
+and red wines is between residual.sugar and sulphates, which is positive correlated 
+for white wines and negative correlated for red wines (d-j). 
+
+As you can see, not all the relations are straight forward and the critical 
+relation in red wines most often is unimportant for white wines. For instances, 
+good red wines show opposite correlations from bad wines in: b-h, b-k, c-e, 
+c-h, c-k, d-i, e-f, e-g, e-j, e-k, whereas good white wines show opposite 
+correlations from bad wines in: a-i, b-h. Bad red wines show much smaller 
+correaltion than good red wines in c-f, c-g, f-i, g-i, i-k, whereas bad white 
+wines show much smaller correaltion than good red wines in b-e, b-k, d-i, d-j, 
+d-k, h-i. This again emphasize the complicated taste of wines and the difference 
+between red and white wines.
+
+## Final plots and Summary
+Here I choose three plots to summarize the findings:
+
+### 1. Wine composition
+First summarize the composition of red and white wines with different qualities.
+
+```{r fig.width=10, fig.height=8, echo=FALSE, message=FALSE, warning=FALSE, wine_composition}
+# wine composition
+com_fields <- c("fixed.acidity", "volatile.acidity", "citric.acid",
+                "residual.sugar", "chlorides",
+                "free.sulfur.dioxide", "total.sulfur.dioxide", "sulphates",
+                "type", "taste")
+df_com_wine <- wine[, com_fields]
+# plot
+melt_com_wine <- melt(df_com_wine, id.vars = c("type", "taste"))
+ggplot(aes(x = variable, y = value, color = variable), data = melt_com_wine)+
+        geom_point(position = "jitter",alpha = 0.5)+
+        scale_y_log10()+
+        facet_grid(taste~type)+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+        labs(x = "",y = "Concentration (ppm)", 
+             title = "Chemical composition in differernt wines")
+```
+
+Here I plotted all chemicals in the dataset except for alcohol. The reason for 
+excluding alcohol from the plotted is mainly due to its different unit. 
+
+White wines have higher amount of total sulfur dioxide, free sulfur dioxide, 
+and residual sugar than red wines. On the other hand, white wines also show 
+broader distributions of volatile acidity, residual sugar, chlorides and 
+sulphates than red wines. 
+
+Concerning the facts that controlling the quality of wines, you can see that  
+good red wines tend to have higher amount of sulphates, residual sugars and 
+citric acids but lower amount of total sulfur dioxide, free sulfur dioxide and 
+chlorides than worse wines. 
+
+As there are more good white wines, the comparison of distribution range among 
+different quality of wines clearly points out that the amount of sugar and 
+sulphates are not crtical in controlling the quality of white wines. And we 
+know that good white wines tend to have higher fixed acidity, citric acidity, 
+citric acid, chlorides and total sulfur dioxide.
+
+### 2. Source of pH:
+
+As acids are the most common components for all the chemicals listed here, 
+I would like to use the second final plot to summarize the compositions of acids
+in different wines.
+
+##### Different acid contribution revealed by the r-square value of linear regression
+```{r fig.width=10, fig.height=4, echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(aes(x = Rid,y = r2, color = taste, group = taste), data = wine_r)+
+        scale_x_continuous(breaks = c(1:6), labels = acid_source)+
+        geom_point()+
+        geom_line()+
+        facet_wrap(~type, scales = "free")+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+        labs(x = "",y = expression(paste(R^{2})))
+```
+
+This plot shows us that:
+
+1. These acids analyzed here are not the dertermining factors for the acidity in white wines. We can still 
+2. Tartaric acid is the top contributors in the acids listed here. Sulphates also contributes quite a bit in all the wines. 
+3. The shape of bad white wines looks the same as the shape of good red wines, which again confirms the very different taste of red and white wines. 
+
+### 3. Golden ratio:
+
+Finally, we should keep in mind that having chemicals in the right range is 
+insufficient to be good wines, the ratio between certain chemicals matters. 
+Therefore, I use the correlation between different chemicals in red and white
+wines of different tastes as the last final plots.
+
+##### Pair correlations of different chemicals 
+##### (for wines showing all chemical components in the same range as good wines) 
+```{r fig.width=10, fig.height=8, echo=FALSE, message=FALSE, warning=FALSE}
+# plot_red wine
+red_plot <- ggplot(aes(x = Xid, y = value), 
+                data = wine_corr[wine_corr$type == "red", ])+
+                geom_point(aes(color = taste))+
+                geom_line()+
+                theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+                labs(title = "red wine", x = "", y = "Correlation coefficient")
+# plot_red wine
+white_plot <- ggplot(aes(x = Xid, y = value), 
+                data = wine_corr[wine_corr$type == "white",])+
+                geom_point(aes(color = taste))+
+                geom_line()+
+                theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+                labs(title = "white wine", x = "", y = "Correlation coefficient")
+grid.arrange(red_plot,white_plot, ncol = 1)
+```
+
+
+```{r conversion_table_a, echo=FALSE , results='asis'}
+knitr::kable(t(get_conversion_table(fields_in)), format = "html")
+```
+
+This plot again emphasizes the very different standard for red and white wines.
+
+
+------
+
+# Reflection
+
+As I want to make the comparison between red and white wines, I used a lot of 
+facet plots. It's makes the plotting code very tidy and I like this a lot. 
+I also used lots lof melt to reshape the data for facet plots. But in the last 
+two analysis: "source of pH" and "secret of good wines", I actually wrote several 
+functions to create data structured in the way that works for facet plot. 
+Probably it's also not a bad idea to write functions for plots then be more 
+flexible with the data. 
+
+The statistics is very simple in R but it took me lots of time to figure out how 
+to retrieve data from the results of statistic tests. For example, to compute all 
+paired correlation coefficients for the whole data, the code can be simply 
+"cor(data)"! But I struggled to retrieve these data and ends up with turning the 
+data into dataframe, a form I am familiar with. Another example is linear 
+regression: "mtable"" summarizes very well all the results of different regressions 
+but I only found how to get the fitting coefficients and r-square values for one test.      
+
+This data set is really nice for revealing the influence of different chemicals 
+in the quality of wines and I did learn a lot more about wines in the analysis. 
+However, it actually doesn't help us to choose a good wine in the shopping. 
+Mainly because the only thing labeled in the wine bottle is the amount of alcohol 
+(actually this appies to all alcoholic drinks). I was actually very surprised 
+considering that even mineral water labels all the details about different ions 
+inside. Therefore, to guide people in selecting good wines, analysis should focus 
+on information provided on the wines, such as the winery, the country, the year 
+and the quality or people's preference of wines. 
+
+
