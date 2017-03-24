@@ -1,7 +1,7 @@
 # Analyze factors impacting the survival on Titanic
  
 * **File:** Titanic.ipynb
-* **Project goal:** Identidy factors influencing the survival of passengers on Titanic.
+* **Project goal:** Identify factors influencing the survival of passengers on Titanic.
  
 * **Data source:** https://www.kaggle.com/c/titanic/data and 
 https://d17h27t6h515a5.cloudfront.net/topher/2016/September/57e9a84c_titanic-data/titanic-data.csv
