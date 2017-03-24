@@ -15,3 +15,4 @@ The most seen street type is "Strasse" and the three most common amenities are b
 #### Other files:
 * clean_format.py and is_in.py: all functions used for data processing.
 * main.py: main program for running all data processing.
+* OpenStreetMapAPI.ipynb: older version of the project, with API implementation: plotly, google map, wikipedia 
