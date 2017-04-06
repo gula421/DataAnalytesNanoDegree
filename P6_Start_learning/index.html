@@ -10,45 +10,22 @@
 </head>
 <body>
     <div id="plot"></div>
-    <script src="js/bar.js"></script>
+    <script src="js/chartWithAxisTipShortCourseFunction.js"></script>
     <script>
         var longList = [];
         var shortList = [];
         var countList = [];
-      //   var course = {}
-        function degreeParser(d) {
+      function courseParser(d, options) {
+        var long = options.long;
+        var short = options.short;
 
-          d.forEach(function(d){
-            if (longList.indexOf(d["LoE_DI"]) == -1) {
-              longList.push(d["LoE_DI"])
-              shortList.push(d["LoE_DI"])
-              countList.push(1)
-            }
-            var countIndex = longList.indexOf(d["LoE_DI"]);
-            countList[countIndex] += 1;               
-        });
-
-        var finalList = [];
-        for (var i =0; i <countList.length; i += 1) {
-          var courseTemp = {
-            "Long": longList[i],
-            "Short": shortList[i],
-            "Count": countList[i]
-          };
-          finalList.push(courseTemp)
-        }
-
-        return finalList;
-      }
-
-      function courseParser(d) {
         d.forEach(function(d){
-            if (longList.indexOf(d["Course Long Title"]) == -1) {
-              longList.push(d["Course Long Title"])
-              shortList.push(d["Course Short Title"])
+            if (longList.indexOf(d[long]) == -1) {
+              longList.push(d[long])
+              shortList.push(d[short])
               countList.push(1)
             }
-            var countIndex = longList.indexOf(d["Course Long Title"]);
+            var countIndex = longList.indexOf(d[long]);
             countList[countIndex] += 1;               
         });
 
@@ -67,12 +44,15 @@
 
 
         d3.csv("age_job_course.csv", function(d){
-            // debugger;
-            var data = courseParser(d);
+            // nameList for course:
+            // var nameList = {"long": "Course Long Title", "short": "Course Short Title"};
+            // nameList for degree: 
+            var nameList = {"long": "LoE_DI", "short": "LoE_DI"};
+            var data = courseParser(d, nameList);
             debugger;
             var updatableChart = barChart().width_svg(400).height_svg(400).data(data);
             d3.select('#plot').call(updatableChart);
-        })  
+        })   
     </script>
 
 </body>
