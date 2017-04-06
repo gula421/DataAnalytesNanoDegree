@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Updatable Charts (3 of 4)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <style>
+        body {
+            padding: 20px 0 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="plot"></div>
+    <script src="js/bar.js"></script>
+    <script>
+          
+        degree = {}
+        course = {}
+        function degreeParser(d) {
+            if (degree[d.LoE_DI] == null) {degree[d.LoE_DI] = 0;}
+            degree[d.LoE_DI] += 1;
+          return degree;
+      }
+
+      function courseParser(d) {
+        d.forEach(function(d){
+            if (course[d["Course Long Title"]] == null) {course[d["Course Long Title"]] = 0;}
+            degree[d.LoE_DI] += 1;
+            course[d["Course Long Title"]] += 1;        
+        });
+        return course;    
+      }
+
+
+        d3.csv("age_job_course.csv", function(d){
+            debugger;
+            var data = Object.values(courseParser(d));
+            var updatableChart = barChart().width(800).data(data);
+            d3.select('#plot').call(updatableChart);
+        })          
+
+    </script>
+
+</body>
+</html>
