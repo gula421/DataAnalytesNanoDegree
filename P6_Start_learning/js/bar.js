@@ -38,9 +38,17 @@ function barChart() {
             xscale.domain(data_key);
             // debugger;
             yscale.domain([0, d3.max(data_value)]);
+// debugger;
+            var tip = d3.tip()
+                          .attr('class', 'd3-tip')
+                          .direction('e')
+                          .offset([0, 20])
+                          .html(function(d, i) {
+                            return '<table id="tiptable">' + data_key[i]+ ", Count:"+data_value[i] + "</table>";
+                        });
+            svg.call(tip);
 
-
-             svg.selectAll('.bar')
+            svg.selectAll('.bar')
                 .data(data_value)
                 .enter()
                 .append('rect')
@@ -48,7 +56,9 @@ function barChart() {
                 .attr("x", function(d, i) {return xscale(data_key[i]);})
                 .attr("width", xscale.rangeBand())
                 .attr("y", function(d) { return yscale(d); })
-                .attr("height", function(d) { return height - yscale(d); });         
+                .attr("height", function(d) { return height - yscale(d); })         
+                .on('mouseover', tip.show)
+                .on('mouseout', tip.hide);
 
             // append x-axis
             svg.append('g')
