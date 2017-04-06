@@ -1,6 +1,7 @@
 function barChart() {
      
         // All options that should be accessible to caller
+    
     var width_svg = 900;
     var height_svg = 200;
     var barPadding = 5;
@@ -12,14 +13,12 @@ function barChart() {
     function chart(selection){
         selection.each(function () {
             
-            var data_value = Object.values(data);
-            // debugger;
-            var data_key = Object.keys(data);
+            debugger;
             var width = width_svg - margin.left - margin.right;
             var height = height_svg - margin.top - margin.bottom;
-            var barSpacing = width / data_value.length;
+            var barSpacing = width / data.length;
             var barWidth = barSpacing - barPadding;
-            var maxValue = d3.max(data_value);
+            var maxValue = d3.max(data, function(d){return d.Count});
             var heightScale = 0.9 * height / maxValue; // max value = 0.9 height
 
 
@@ -35,28 +34,28 @@ function barChart() {
             var yscale = d3.scale.linear().range([height, 0]);
             var xAxis = d3.svg.axis().scale(xscale).orient("bottom");
             var yAxis = d3.svg.axis().scale(yscale).orient("left");
-            xscale.domain(data_key);
+            xscale.domain(data.map(function(d){return d.Short; }));
             // debugger;
-            yscale.domain([0, d3.max(data_value)]);
+            yscale.domain([0, d3.max(data, function(d){return d.Count;})]);
 // debugger;
             var tip = d3.tip()
                           .attr('class', 'd3-tip')
                           .direction('e')
                           .offset([0, 20])
-                          .html(function(d, i) {
-                            return '<table id="tiptable">' + data_key[i]+ ", Count:"+data_value[i] + "</table>";
+                          .html(function(d) {
+                            return '<table id="tiptable">' + d.Long+ ", Count:"+d.Count + "</table>";
                         });
             svg.call(tip);
 
             svg.selectAll('.bar')
-                .data(data_value)
+                .data(data)
                 .enter()
                 .append('rect')
                 .attr('class', 'bar')
-                .attr("x", function(d, i) {return xscale(data_key[i]);})
+                .attr("x", function(d) {return xscale(d.Short);})
                 .attr("width", xscale.rangeBand())
-                .attr("y", function(d) { return yscale(d); })
-                .attr("height", function(d) { return height - yscale(d); })         
+                .attr("y", function(d) { return yscale(d.Count); })
+                .attr("height", function(d) { return height - yscale(d.Count); })         
                 .on('mouseover', tip.show)
                 .on('mouseout', tip.hide);
 
