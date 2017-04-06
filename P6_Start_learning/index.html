@@ -2,44 +2,77 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Updatable Charts (3 of 4)</title>
+    <title>bar chart</title>
+     <link rel="stylesheet" type="text/css" href="css/bar.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-    <style>
-        body {
-            padding: 20px 0 0 10px;
-        }
-    </style>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+
 </head>
 <body>
     <div id="plot"></div>
     <script src="js/bar.js"></script>
     <script>
-          
-        degree = {}
-        course = {}
+        var longList = [];
+        var shortList = [];
+        var countList = [];
+      //   var course = {}
         function degreeParser(d) {
-            if (degree[d.LoE_DI] == null) {degree[d.LoE_DI] = 0;}
-            degree[d.LoE_DI] += 1;
-          return degree;
+
+          d.forEach(function(d){
+            if (longList.indexOf(d["LoE_DI"]) == -1) {
+              longList.push(d["LoE_DI"])
+              shortList.push(d["LoE_DI"])
+              countList.push(1)
+            }
+            var countIndex = longList.indexOf(d["LoE_DI"]);
+            countList[countIndex] += 1;               
+        });
+
+        var finalList = [];
+        for (var i =0; i <countList.length; i += 1) {
+          var courseTemp = {
+            "Long": longList[i],
+            "Short": shortList[i],
+            "Count": countList[i]
+          };
+          finalList.push(courseTemp)
+        }
+
+        return finalList;
       }
 
       function courseParser(d) {
         d.forEach(function(d){
-            if (course[d["Course Long Title"]] == null) {course[d["Course Long Title"]] = 0;}
-            degree[d.LoE_DI] += 1;
-            course[d["Course Long Title"]] += 1;        
+            if (longList.indexOf(d["Course Long Title"]) == -1) {
+              longList.push(d["Course Long Title"])
+              shortList.push(d["Course Short Title"])
+              countList.push(1)
+            }
+            var countIndex = longList.indexOf(d["Course Long Title"]);
+            countList[countIndex] += 1;               
         });
-        return course;    
+
+        var courseList = [];
+        for (var i =0; i <countList.length; i += 1) {
+          var courseTemp = {
+            "Long": longList[i],
+            "Short": shortList[i],
+            "Count": countList[i]
+          };
+          courseList.push(courseTemp)
+        }
+
+        return courseList;    
       }
 
 
         d3.csv("age_job_course.csv", function(d){
+            // debugger;
+            var data = courseParser(d);
             debugger;
-            var data = Object.values(courseParser(d));
-            var updatableChart = barChart().width(800).data(data);
+            var updatableChart = barChart().width_svg(400).height_svg(400).data(data);
             d3.select('#plot').call(updatableChart);
-        })          
-
+        })  
     </script>
 
 </body>
