@@ -7,7 +7,7 @@ function barChart() {
     var barPadding = 5;
     var fillColor = 'steelblue';
     var data = [];
-    var margin = {top:10, right:10, left:60, bottom:200};
+    var margin = {top:10, right:10, left:70, bottom:200};
     // var hoverColor = 'red';
      
     function chart(selection){
@@ -76,6 +76,17 @@ function barChart() {
             svg.append('g')
                .attr("class", "axis")
                .call(yAxis);
+            debugger;
+
+            // y-label
+            svg.append("text")
+              .attr("class", "axislabel")
+              .attr("y", -margin.left) // x and y switched due to rotation
+              .attr("x", -(height / 2))
+              .attr("dy", "1em")
+              .attr("transform", "rotate(-90)")
+              .style("text-anchor", "middle")
+              .text("Count");
                
          });
     }
