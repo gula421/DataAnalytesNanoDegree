@@ -1,32 +1,260 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>bar chart</title>
-     <link rel="stylesheet" type="text/css" href="css/bar.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+	<meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="style.css">
+	<script src="http://d3js.org/d3.v3.min.js"></script> 
+  <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js">
+  </script>
 
+	<title>Start Learning!</title>
+
+  <!-- main structure of the javasript -->
+   <script>
+  //// plot world map
+  function draw(geo_data) {
+
+        d3.select("#world_map")
+          .append("h2")
+          .attr('class','remark')
+          .text("Number of registered people");
+
+        // decide the size of the map
+        var margin = 40,
+            width = 1400,
+            height = 600;
+
+        var svg = d3.select("#world_map")
+              .append("svg")
+              .attr("width", width)
+              .attr("height", height)
+              .append('g')
+              .attr('class', 'map');
+
+      
+        // project the 3D geographic data into a 2D map using mercator
+        var projection = d3.geo.mercator()
+                               .scale(140)
+                               .translate([width / 2.2, height / 1.5]);
+
+        var path = d3.geo.path().projection(projection);
+
+        // add data to plot map
+        // use "path" to plot complicated shapes 
+        var div = d3.select('#world_map')
+                    .append('div')
+                    .attr('class','tooltip')
+        
+        // plot map and show country name
+        var map = svg.selectAll('path')
+                     .data(geo_data.features)
+                     .enter()
+                     .append('path')
+                     .attr('d', path)
+                     .style('fill', 'lightgray')
+                     .style('stroke', 'black')
+                     .style('stroke-width', 0.5)
+                     .on("mousemove", function(d){
+                        div.html(d.properties.name)
+
+                     })
+
+  //// plot circles showing values of interested fields 
+        // parse the input data (country_activity.csv)
+        var parser = function(d){
+                // debugger;
+                d['registered'] = + d['registered'];
+                d['ndays_act'] = + d['ndays_act'];
+                d['nplay_video'] = + d['nplay_video'];
+                d['nforum_posts'] = + d['nforum_posts'];
+                d['lat'] = +d['lat'];
+                d['lon'] = +d['lon'];
+                return d;
+
+            }  
+        var fillColors = ['steelblue', 'teal', 'red', 'green'];
+        var fieldNames = ['registered','ndays_act', 'nplay_video', 'nforum_posts'];
+        var fieldRelate = {
+                  'registered': 'registered people',
+                  'ndays_act':'active days', 
+                  'nplay_video':'played videos', 
+                  'nforum_posts':'posts on forum'
+                }; 
+
+        // read in csv data
+        d3.csv("country_activity.csv", parser, function(d){
+        var plotCircle = plot_points().data(d);
+        d3.select(".map").call(plotCircle);
+
+        //animation start
+        var i = 0;
+        var circle_interval = setInterval(function() {
+            plotCircle.fieldName(fieldNames[i]);
+            // plotCircle.fillColor(fillColors[i]);
+            // i = (i+1) % fieldNames.length ;
+            i ++;
+
+            if (i == fieldNames.length){
+                clearInterval(circle_interval);
+
+            // interaction with clicking the buttons
+            // first add buttons
+            var buttons = d3.select("#world_map").append("div")
+                        .attr("class", "activity_buttons")
+                        .selectAll("div")
+                        .data(fieldNames)
+                        .enter()
+                        .append("div")
+                        .text(function(d) {
+                            return fieldRelate[d];
+                        });
+            // responses to click the buttons
+            buttons.on("click", function(d) {
+                    // reset the color of every button
+                    d3.select(".activity_buttons")
+                      .selectAll("div")
+                      .transition()
+                      .duration(500)
+                      .style("color", "black")
+                      .style("background", "rgb(251, 201, 127)");
+
+                    // highlight the selected button
+                    d3.select(this)
+                      .transition()
+                      .duration(500)
+                      .style("background", "lightBlue")
+                      .style("color", "white"); 
+
+                    // plot the related fields according to the selected button 
+                    plotCircle.fieldName(d);
+                    }); // end of button.on
+            } // end of if : after animation
+        }, 1000); //end of setInterval: animation
+        }) //end of d3.csv     
+  }; // end of draw
+  </script>
 </head>
+
 <body>
-    <div id="plot"></div>
-    <script src="js/chartWithAxisTipShortCourseFunction.js"></script>
-    <script>
+	<!-- Brief Introduction -->
+	<h2>START LEARNING <span style="color: red">TODAY!</span></h2>
+	<h3><span style = "color: red">641138</span> 
+	people around the world are learing online!</h3>
+  
+  <div class="mapPlot", id="world_map"></div>
+  <div>
+    <h2>Explore the background and courses taken from people with your age! </h2>
+  </div>
+  <div class="histPlot", id="age"></div>
+  <div class="barPlot", id="degree"></div>
+  <div class="barPlot", id="course"></div>
+	
+	<script src="point.js"></script>
+  <script src="bar.js"></script>
+  <script src="hist.js"></script>
+  
+  <!-- load geodata to plot the world map-->
+  <script>
+	  d3.json("world_countries.json", draw);
+  </script>
+
+  <!-- plot age, degree and courses distributions-->
+  <script>
+ //// plot histogram showing Age distribution
+    d3.select('#age').append('h4').text('Age Distribution');
+    
+    // parse the data: transform age into floating number
+    var newList = [];
+    
+    function parser(d) {
+      d.forEach(function(d){
+        newList.push(+d["Age"]) ;
+      })
+        return newList;
+    }
+
+
+    // Read in .csv data and make histogram of Age
+    d3.csv("country_age_job_course.csv",
+            function(d) {
+            var data = parser(d);
+            var histfun = hist()
+                          .width_svg(400)
+                          .height_svg(240)
+                          .binsize(1)
+                          .data(data);
+                          // .fillColor('red'); 
+            
+            d3.select('#age').call(histfun);
+                      
+            // response to click age bin
+            var hist_bins = d3.select("#age").selectAll(".bar");  
+            hist_bins.on("click", function(d) {
+                    // only the selected age bin changes color to red
+                    d3.select("#age")
+                      .selectAll(".bin")
+                      .transition()
+                      .duration(100)
+                      .style("fill", 'steelblue');
+
+                    d3.select(this)
+                      .select('.bin')
+                      .transition()
+                      .duration(100)
+                      .style('fill','red');
+    
+                     // Choose another Age bin
+                     // reset the color of degree and course
+                     d3.select('#degree')
+                       .selectAll(".ageDegree_bin")
+                       .remove();
+
+                     d3.select('#course')
+                       .selectAll(".ageDegree_bin")
+                       .remove();
+
+                    // plot new degree bar 
+                    d3.csv("age_job_course.csv", function(d2){
+                        var nameList = {"long": "LoE_DI", 
+                                        "short": "LoE_DI", 
+                                        'age': d.x_value};
+                        var data = courseParserLimit(d2, nameList);
+                        var allDegreeBar = barChart().width_svg(400).height_svg(400).fillColor('red').addBar(allDegree,data,'degree');
+                      })
+
+                    // plot new course bar 
+                    d3.csv("age_job_course.csv", function(d2){
+                        var nameList = {"long": "Course Long Title", 
+                                        "short": "Course Short Title", 
+                                        'age': d.x_value};
+                        var data = courseParserLimit(d2, nameList);
+                        var allCourseBar = barChart().width_svg(400).height_svg(400).fillColor('red').addBar(allCourse,data,'course');
+                     })           
+            }); // end of buttons.on for chosing age bin
+    }); // end of reading the data
+
+
+  //// bar plots showing degree distribution
+  // function used in bar plot
+    function courseParserLimit(d, options) {
+        var long = options.long;
+        var short = options.short;
+        var chosen_age = options.age;
+        var chosen_degree = options.degree;
         var longList = [];
         var shortList = [];
         var countList = [];
-      function courseParser(d, options) {
-        var long = options.long;
-        var short = options.short;
-
         d.forEach(function(d){
-            if (longList.indexOf(d[long]) == -1) {
-              longList.push(d[long])
-              shortList.push(d[short])
-              countList.push(1)
+          if (d.Age == chosen_age || chosen_age == undefined){
+                    if (longList.indexOf(d[long]) == -1) {
+                      longList.push(d[long])
+                      shortList.push(d[short])
+                      countList.push(1)
+                        }
+                var countIndex = longList.indexOf(d[long]);
+                countList[countIndex] += 1;                 
             }
-            var countIndex = longList.indexOf(d[long]);
-            countList[countIndex] += 1;               
+            
         });
 
         var courseList = [];
@@ -40,20 +268,34 @@
         }
 
         return courseList;    
-      }
+      } // end of courseParserLimit
 
 
-        d3.csv("age_job_course.csv", function(d){
+  //// plot degree info from all data and save it as global variable
+    d3.select('#degree').append('h4').text('Degree Distribution');
+    var allDegree = [];
+    var degree_nameList = {"long": "LoE_DI", 
+                           "short": "LoE_DI"};
+    d3.csv("age_job_course.csv", function(d){
+            var data = courseParserLimit(d, degree_nameList);
+            allDegree.push(data);
+            var updateDegree = barChart().width_svg(400).height_svg(400).data(data);
+            d3.select('#degree').call(updateDegree);       
+    })   
+
+  //// plot degree info from all data and save it as global variable
+    d3.select('#course').append('h4').text('Course Distribution');
+    var allCourse = [];
+    var course_nameList = {"long": "Course Long Title", 
+                           "short": "Course Short Title"};
+    d3.csv("age_job_course.csv", function(d){
             // nameList for course:
-            // var nameList = {"long": "Course Long Title", "short": "Course Short Title"};
-            // nameList for degree: 
-            var nameList = {"long": "LoE_DI", "short": "LoE_DI"};
-            var data = courseParser(d, nameList);
-            debugger;
-            var updatableChart = barChart().width_svg(400).height_svg(400).data(data);
-            d3.select('#plot').call(updatableChart);
-        })   
-    </script>
-
+            var data = courseParserLimit(d, course_nameList);
+            allCourse.push(data);
+            var updateCourse = barChart().width_svg(400).height_svg(400).data(data);
+            d3.select('#course').call(updateCourse);
+    })   
+  </script>
+	
 </body>
 </html>
