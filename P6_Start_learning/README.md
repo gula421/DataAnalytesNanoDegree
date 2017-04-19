@@ -1,4 +1,4 @@
-## Abstract
+## Summary
 More and more people are taking online courses now. The goal is to motivate you to start learning with online courses by showing some data to give you some guideline of taking courses. 
 
 This data visualization shows how many people taking online courses in different countries and their activities. You can also see the age and background distribution of the students and the courses they took. By clicking the bin of your age, you can explore the background of people with your age and see what kind of courses they took. 
