@@ -13,7 +13,7 @@ This data visualization shows how many people taking online courses in different
 - layout/hierarchy: World map on the top of the page and then showing the distribution of age, background (highest degree obtained) and enrolled courses.
 - legends: Hover the mouse on each circle, land and bin to see the actual number of each field.    
 
-## reference:R
+## Reference:
 * https://bl.ocks.org/
 * http://cagrimmett.com/til/2016/04/26/responsive-d3-bar-chart.html
 * https://www.toptal.com/d3-js/towards-reusable-d3-js-charts
