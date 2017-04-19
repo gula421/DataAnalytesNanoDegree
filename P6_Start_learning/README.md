@@ -10,6 +10,7 @@ The data were processed using python (EDA.ipynb) to
 - remove "Other" regions (e.g., Other South Asia)
 - match the country names between EdX data and json map data
 - find the center of mass for the largest land in a country as the center of the plotted circle on the map.
+
 The processed data can be found using the link:
 - [age_job_course.csv](https://www.dropbox.com/s/4na1gh45q3yk98h/age_job_course.csv?dl=0)
 - [country_activity.csv](https://www.dropbox.com/s/nhswgzwb0w0h5vg/country_activity.csv?dl=0)
