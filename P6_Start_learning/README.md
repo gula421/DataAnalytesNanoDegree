@@ -3,6 +3,19 @@ More and more people are taking online courses now. The goal is to motivate you 
 
 This data visualization shows how many people taking online courses in different countries and their activities. You can also see the age and background distribution of the students and the courses they took. By clicking the bin of your age, you can explore the background of people with your age and see what kind of courses they took. 
 
+## Data sources:
+[edX.org Academic Year 2012-2013](https://public.tableau.com/en-us/s/resources)
+The data were processed using python (EDA.ipynb) to
+- remove invalid entries (null values)
+- remove "Other" regions (e.g., Other South Asia)
+- match the country names between EdX data and json map data
+- find the center of mass for the largest land in a country as the center of the plotted circle on the map.
+The processed data can be found using the link:
+[age_job_course.csv](https://www.dropbox.com/s/4na1gh45q3yk98h/age_job_course.csv?dl=0)
+[country_activity.csv](https://www.dropbox.com/s/nhswgzwb0w0h5vg/country_activity.csv?dl=0)
+[country_age_job_course](https://www.dropbox.com/s/6twn5mnjzcyul1i/country_age_job_course.csv?dl=0)
+[world_countries.json](https://www.dropbox.com/s/icp8o2hh7ppgtln/world_countries.json?dl=0)
+
 
 ## Initial design decisions:
 - chart type: world map, histogram and bar plots.
@@ -12,6 +25,7 @@ This data visualization shows how many people taking online courses in different
   - Animation first shows the global trend in course taking activities and then interactions are available for further exploration.
 - layout/hierarchy: World map on the top of the page and then showing the distribution of age, background (highest degree obtained) and enrolled courses.
 - legends: Hover the mouse on each circle, land and bin to see the actual number of each field.    
+
 
 ## Reference:
 * https://bl.ocks.org/
