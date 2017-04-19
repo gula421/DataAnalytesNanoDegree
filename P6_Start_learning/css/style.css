@@ -1,0 +1,82 @@
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+.bar rect {
+  fill: steelblue;
+  shape-rendering: crispEdges;
+}
+.bar rect:hover{
+  fill: rgba(0,0,0,.8);
+}
+/*.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}*/
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font-family: sans-serif;
+  font-size: 10px;
+}
+
+.axislabel {
+  font-family: sans-serif;
+  font-size: 13px;
+}
+
+div.activity_buttons {
+  position: fixed;
+  top: 5px;
+  left: 50px;
+}
+
+div.activity_buttons div {
+  background-color: rgb(251, 201, 127);
+  padding: 3px;
+  margin: 7px;
+}
+
+.world_map {
+  /*position: fixed;
+  left: 5%;
+  right: 5%;*/
+  width: 90%;
+  float: left;
+  padding: 10px;
+}
+.histPlot, .barPlot {
+  width: 30%;
+  float: left;
+  padding: 10px;
+}
+
+body {
+  text-align: center;
+}
+
+.remark {
+  text-align: center;
+  color: blue;
+  font-size: 18px;
+}
+
+.point{
+  fill: steelblue;
+  opacity: 0.5;
+
+}
+
+.bin:hover {
+  fill: brown;
+}
