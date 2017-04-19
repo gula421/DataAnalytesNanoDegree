@@ -1,4 +1,5 @@
 function hist() {
+    // accesible options to the caller
     var binsize = 1;
     var data = [];
     var width_svg = 800;
@@ -7,7 +8,6 @@ function hist() {
     var fillColor = 'steelblue';
     var binSpacing = 0.8; // (unit: binWidth) 
                           // The size of binSpacing = 1 means no spacing. 
-    // debugger;
 
     function chart(selection){
       selection.each(function () {
@@ -52,7 +52,7 @@ function hist() {
                           .scale(y)
                           .ticks(8)
                           .orient("left");
-
+        // tip response
         var tip = d3.tip()
                     .attr('class', 'd3-tip')
                     .direction('e')
@@ -62,14 +62,13 @@ function hist() {
                         var age_out = d.x_value;
                       } else {
                         var age_out = d.x_value + " - " + ((d.x_value)+binsize);
-                      }
-                      
+                      }       
                       return '<table id="tiptable">' + "Age: "+ 
                       age_out + 
                       ", Count: "+d.count + "</table>";
                   });
 
-        // put the graph in the div with id as "idname"
+        // put the graph in an svg
         var svg = d3.select(this).append('svg')
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
@@ -86,6 +85,7 @@ function hist() {
           .enter().append("g")
           .attr("class", "bar")
           .append("rect")
+          .attr('class', 'bin')
           .attr("x", function(d){return x(d.x_value)})
           .attr("width", binSpacing*(x(histdata[1].x_value)-x(histdata[0].x_value)))
           .attr("y", function(d){return  y(d.count);})

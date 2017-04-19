@@ -1,19 +1,15 @@
 function barChart() {
-     
-        // All options that should be accessible to caller
-    
+    // accesible options to the caller
     var width_svg = 900;
     var height_svg = 200;
     var barPadding = 5;
     var fillColor = 'steelblue';
     var data = [];
     var margin = {top:10, right:10, left:70, bottom:200};
-    // var hoverColor = 'red';
      
     function chart(selection){
         selection.each(function () {
-            
-            debugger;
+
             var width = width_svg - margin.left - margin.right;
             var height = height_svg - margin.top - margin.bottom;
             var barSpacing = width / data.length;
@@ -21,7 +17,7 @@ function barChart() {
             var maxValue = d3.max(data, function(d){return d.Count});
             var heightScale = 0.9 * height / maxValue; // max value = 0.9 height
 
-
+            // add a svg to put the bar plot
             var svg = d3.select(this).append('svg')
                          .attr('height', height_svg)
                          .attr('width', width_svg)
@@ -29,15 +25,15 @@ function barChart() {
                          .attr("class", "graph")
                          .attr("transform","translate (" + margin.left + " ," + margin.top + " )");
              
-            // axis
+            // scale the axis
             var xscale = d3.scale.ordinal().rangeRoundBands([0, width], 0.1, 0.3);
             var yscale = d3.scale.linear().range([height, 0]);
             var xAxis = d3.svg.axis().scale(xscale).orient("bottom");
             var yAxis = d3.svg.axis().scale(yscale).orient("left");
             xscale.domain(data.map(function(d){return d.Short; }));
-            // debugger;
             yscale.domain([0, d3.max(data, function(d){return d.Count;})]);
-// debugger;
+
+            // response of tip
             var tip = d3.tip()
                           .attr('class', 'd3-tip')
                           .direction('e')
@@ -47,18 +43,22 @@ function barChart() {
                         });
             svg.call(tip);
 
+            // add the bar plots
             svg.selectAll('.bar')
                 .data(data)
-                .enter()
+                .enter() 
+                .append('g')
+                .attr('class', 'bar_group')
                 .append('rect')
-                .attr('class', 'bar')
+                .attr('class','bar_bin')
                 .attr("x", function(d) {return xscale(d.Short);})
                 .attr("width", xscale.rangeBand())
                 .attr("y", function(d) { return yscale(d.Count); })
-                .attr("height", function(d) { return height - yscale(d.Count); })         
+                .attr("height", function(d) { return height - yscale(d.Count); })
+                .style("fill", fillColor)
                 .on('mouseover', tip.show)
-                .on('mouseout', tip.hide);
-
+                .on('mouseout', tip.hide);        
+                
             // append x-axis
             svg.append('g')
                .attr("class", "axis")
@@ -71,12 +71,10 @@ function barChart() {
                .attr("transform", "rotate(90)")
                .style("text-anchor", "start");
 
-
             // append y-axis
             svg.append('g')
                .attr("class", "axis")
                .call(yAxis);
-            debugger;
 
             // y-label
             svg.append("text")
@@ -87,9 +85,45 @@ function barChart() {
               .attr("transform", "rotate(-90)")
               .style("text-anchor", "middle")
               .text("Count");
-               
-         });
-    }
+
+
+            //// function to add bar on top of global data
+            AddBarPlot = function(data, data2, barID){
+
+                // data: global data (the unchanged bar plot)
+                // data2: selcted data (the bar plot changed according to the selected fields)
+                // barID: ID of the div encapsulates the entire bar plot
+
+                // reset global scale to be agreed with the right data (data)
+                var xscale = d3.scale.ordinal().rangeRoundBands([0, width], 0.1, 0.3);
+                var yscale = d3.scale.linear().range([height, 0]);
+                var xAxis = d3.svg.axis().scale(xscale).orient("bottom");
+                var yAxis = d3.svg.axis().scale(yscale).orient("left");
+                var xlist = [];
+                var ylist = [];
+                for (var i = 0; i < data[0].length; i++) {
+                  xlist.push(data[0][i].Short);
+                  ylist.push(data[0][i].Count);
+                }
+                xscale.domain(xlist);
+                yscale.domain([0, d3.max(ylist)]);
+
+                // add bar using new data (data2)
+                var update = d3.select('#'+barID).selectAll('.bar_group').data(data2);
+
+                update
+                    .append('rect')
+                    .attr('class','ageDegree_bin')
+                    .attr("x", function(d) {return xscale(d.Short);})
+                    .attr("width", xscale.rangeBand())
+                    .attr("y", function(d) { return yscale(d.Count); })
+                    .attr("height", function(d) { return height - yscale(d.Count); })
+                    .style("fill", 'red')
+                    .on('mouseover', tip.show)
+                    .on('mouseout', tip.hide); 
+            } // end of AddBarPlot     
+         });//end of selection
+    }// end of chart
      
             chart.width_svg = function(value) {
                 if (!arguments.length) return width_svg;
@@ -125,7 +159,13 @@ function barChart() {
                 if(!arguments.length) return margin;
                 margin = value;
                 return chart;
-            }
+            };
+
+            chart.addBar = function(data1, data2, barID) {
+                debugger;
+                AddBarPlot(data1, data2, barID)
+                return chart;
+            };
      
             return chart;
-} 
+} // end of the whole function: barChart 
