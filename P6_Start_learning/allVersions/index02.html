@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id = "age" class="graph"></div>
+    <link rel="stylesheet" type="text/css" href="style01.css">
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js">
+    </script>
+    <script src="hist02.js"></script>
+    <script>
+      
+      // functions to parse the data 
+      // age limit
+
+      var newList = [];
+
+      function age_parser(d) {
+        d.forEach(function(d) {
+          if (+d["Age"] > 20) {newList.push(+d["Age"])};
+        })
+        return newList;
+      }
+
+      // country
+      function country_parser(d){ 
+      d.forEach(function(d) {
+        if (d["Country"] == 'Greece') {newList.push(+d["Age"])};      
+      })      
+        return newList;
+      }
+
+      // transform age into floating number
+      function parser(d) {
+        d.forEach(function(d){
+          d["Age"] = +d["Age"];
+        })
+          return d["Age"];
+      }
+
+
+      // Read in .csv data and make graph
+      d3.csv("country_age_job_course.csv",
+             function(d) {
+             var data = country_parser(d);
+             var histfun = hist()
+                          .fillColor('red')
+                          .width_svg(400)
+                          .height_svg(300)
+                          .binsize(3) // can be adjusted here
+                          .data(data); 
+             d3.select('#age').call(histfun);
+      }); 
+    </script>
+ 
+
+  </body>
+</html>

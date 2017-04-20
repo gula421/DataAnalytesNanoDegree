@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id = "age" class="graph"></div>
+    <link rel="stylesheet" type="text/css" href="style01.css">
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js">
+    </script>
+    <script src="hist01.js"></script>
+    <script>
+      // parse the data (e.g., choosing the field from the csv data)
+      function parser(d) {
+          d.Age = +d.Age;
+          return d.Age;
+      }
+      // Read in .csv data and make graph
+      d3.csv("age_job_course.csv", parser,
+             function(error, csvdata) {
+             hist(csvdata,'age');
+      }); 
+    </script>
+    
+    
+    <!-- <div id = "mpg" class="graph" ></div> -->
+
+  </body>
+</html>
