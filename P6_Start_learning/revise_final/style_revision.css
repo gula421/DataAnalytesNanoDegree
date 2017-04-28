@@ -1,0 +1,193 @@
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+.bar rect {
+  fill: steelblue;
+  shape-rendering: crispEdges;
+}
+.bar rect:hover{
+  fill: rgba(0,0,0,.8);
+}
+/*.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}*/
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font-family: sans-serif;
+  font-size: 9px;
+}
+
+.axislabel {
+  font-family: sans-serif;
+  font-size: 11px;
+}
+
+div.activity_buttons {
+  position: absolute;
+  top: 5px;
+  right: 30px;
+}
+
+div.activity_buttons div {
+  background-color: rgb(251, 201, 127);
+  padding: 3px;
+  margin: 7px;
+}
+
+.mapSVG {
+  position: absolute;
+  left: 360px;
+  top: 120px;
+  /*width: 60%;*/
+  /*float: left;*/
+  padding: 1px;
+}
+
+#age{
+  position: absolute;
+  left:5px;
+  top: 35px;
+}
+
+#degree{
+  position: absolute;
+  left:10px;
+  top: 220px;
+}
+
+#course{
+  position: absolute;
+  left:10px;
+  top: 430px;
+}
+
+/*.histPlot, .barPlot {
+  position: fixed;
+  width: 25%;
+  float: left;
+  padding: 1px;
+}*/
+
+body {
+  text-align: center;
+  font-family: sans-serif;
+}
+
+.remark {
+  text-align: center;
+  color: steelblue;
+  font-size: 18px;
+}
+
+.point{
+  fill: steelblue;
+  opacity: 0.5;
+
+}
+
+.bin:hover {
+  fill: brown;
+}
+
+.highlight {
+  position: absolute;
+  top:10px;
+  left: 10px;
+  width: 8%;
+  float: left;
+  padding: 10px;
+  /*background-color: blue;*/
+  color: white;
+  padding: 2px;
+  margin: 1px;
+}
+
+div.h2 {
+  width: 80%;
+  float: left;
+  padding: 10px;
+}
+
+.back {
+  position: absolute;
+  top: 10px;
+  left: 150px;
+/*  float: left;*/
+  padding: 2px;
+  /*background-color: green;*/
+  color: white;
+  margin: 1px;
+}
+
+h6 {
+  margin:0;
+  position: relative;
+  left: 100px;
+  top:3px;
+
+}
+
+a{
+  position: absolute;
+  right: 50px;
+  bottom: 15px;
+}
+
+#explore {
+  position: absolute;
+  top: 60px;
+  left: 200px;
+  font-size: 10px;
+  color: blue;
+}
+
+#change{
+  position: absolute;
+  top: 40px;
+  right: 230px;
+  margin: 0;
+  padding: 0;
+  color: red;
+}
+
+#others{
+  position: absolute;
+  top: 70px;
+  right: 203px;
+  margin: 0;
+  padding: 0;
+  color: steelblue;
+}
+
+.legendCircle {
+      width: 10px;
+      height: 10px;
+      -webkit-border-radius: 5px;
+      -moz-border-radius: 5px;
+      border-radius: 5px;
+      background: red;
+    }
+#others .legendCircle{
+  background: steelblue;
+}
+
+#year_activity{
+  position: absolute;
+  top: 42.5px;
+  right: 50px;
+  margin: 0;
+  padding: 0;
+}

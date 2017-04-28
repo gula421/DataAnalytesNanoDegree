@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="style_revision.css">
+	<script src="http://d3js.org/d3.v3.min.js"></script> 
+  <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js">
+  </script>
+
+
+	<title>Start Learning!</title>
+
+  <!-- main structure of the javasript -->
+   <script>
+  //// plot world map
+  function draw(geo_data) {
+
+    /// plot map alone
+        // decide the size of the map
+        var playSpeed = 2000; // the interval between each animation (ms)
+        var margin = 40,
+            width = 800,
+            height = 500;
+        var selectedColor = '#f2760c',
+            otherColor = 'steelblue'; 
+        var nativeCountries = ['USA','India','Canada','England','Nigeria','Australia'],
+            justiceCountries = ['Japan', 'China'],
+            circuitCountries = ['India','Bangladesh','Egypt','Pakistan'],
+            healthCountries = ['Nigeria', 'Egypt'],
+            GreekCountries = ['Greece'];
+        var his_width = 360,
+            his_height = 180,
+            bar_width = 360,
+            bar_height = 200,
+            bar_top = 1, 
+            bar_right = 1,
+            bar_left = 50,
+            bar_bottom = 50;
+        var num_highlight = 2;
+        var GlobalColor = 'steelblue';
+        var highlight_global_courses = ['Intro CS', 'CS'],
+            highlight_global_degrees = ["Secondary","Bachelor's","Master's"];
+
+        /// starting layout
+        // text
+        d3.select("#world_map")
+          .append("h2")
+          .attr('class','remark')
+          .html("Number of <span style='font-size: 26px'>registered</span> people");  
+        // map
+        var svg = d3.select("#world_map")
+              .append("svg")
+              .attr("class","mapSVG")
+              .attr("width", width)
+              .attr("height", height)
+              .append('g')
+              .attr('class', 'map');
+
+      
+        // project the 3D geographic data into a 2D map using mercator
+        var projection = d3.geo.mercator()
+                               .scale(140)
+                               .translate([width / 2.2, height / 1.5]);
+
+        var path = d3.geo.path().projection(projection);
+
+        // add data to plot map
+        // use "path" to plot complicated shapes 
+        // plot map and show country name
+        var map = svg.selectAll('path')
+                     .data(geo_data.features)
+                     .enter()
+                     .append('path')
+                     .attr('d', path)
+                     .style('fill', 'lightgray')
+                     .style('stroke', 'black')
+                     .style('stroke-width', 0.5);
+                     
+
+  //// plot circles showing values of interested fields 
+        // parse the input data (country_activity.csv)
+        var parserActivity = function(d){
+                d['registered'] = + d['registered'];
+                d['ndays_act'] = + d['ndays_act'];
+                d['nplay_video'] = + d['nplay_video'];
+                d['nforum_posts'] = + d['nforum_posts'];
+                d['lat'] = +d['lat'];
+                d['lon'] = +d['lon'];
+                return d;
+
+            }  
+        var fillColors = {
+                  'registered': 'steelblue',
+                  'ndays_act': 'teal', 
+                  'nplay_video': 'red', 
+                  'nforum_posts': 'green'
+        };
+        var fieldNames = ['registered','ndays_act', 'nplay_video', 'nforum_posts'];
+        var fieldRelate = {
+                  'registered': 'registered',
+                  'ndays_act':'active days', 
+                  'nplay_video':'videos watched', 
+                  'nforum_posts':'posts on forum'
+                }; 
+
+        // plot circle
+    // read in country_activity data
+    d3.csv("country_activity.csv", parserActivity, function(activity_data){
+        var plotCircle = plot_points().data(activity_data).width(width).height(height);
+        d3.select(".map").call(plotCircle); // number of registered
+        // whole data set
+        d3.csv("statistics.csv",function(statistic_data) {
+        
+
+        ///////////// start of animation functions ///////////
+        function plotBars(alldata, options){
+            var out_ID = options.out_ID;
+            var type = options.type;
+            var selected_country = options.selected_country;
+            var selectedBar = options.selectedBar;
+            var addColor = options.addColor;
+
+            if (selected_country.length > 0){
+              var d = alldata.filter(function(d_filtering) {
+                            return d_filtering["Country"] === selected_country;//d_click.country_name;
+                        });
+            } else {
+              var d = alldata; // no filtering
+            };
+
+          //// save degree info from all data  
+            var allBar = [];  
+            if (type == 'course' ){
+              // functions to get courseData 
+            var Bar_nameList = {"long": "Course Long Title", "short": "Course Short Title"};
+            var BarData = courseParserLimit(d, Bar_nameList);
+             
+            } else { // type == 'degree'
+              var Bar_nameList = {"long": "LoE_DI", "short": "LoE_DI"};
+              var BarData = orderDegreeData(d, Bar_nameList);
+            }; // end of if: choosing type (degree or course)
+            
+            allBar.push(BarData);     
+            // remove old bars
+            d3.select('#'+ out_ID).select('.wholeBar').remove(); 
+            // plot bar 
+            var updateHere = barChart()
+                            .width_svg(bar_width)
+                            .height_svg(bar_height)
+                            .margin({top:bar_top, 
+                                     right:bar_right, 
+                                     left:bar_left, 
+                                     bottom:bar_bottom})
+                            .data(BarData);
+            d3.select('#'+ out_ID).call(updateHere);  
+
+
+              // highlight
+            var filtered_Bar = BarData.filter(function(filter){
+              return selectedBar.indexOf(filter.Short) !== -1;
+            });
+            var highlightBar = barChart()
+                              .width_svg(bar_width)
+                              .height_svg(bar_height)
+                              .margin({top:bar_top, 
+                                        right:bar_right, 
+                                        left:bar_left, 
+                                        bottom:bar_bottom})
+                              .addBar(allBar, filtered_Bar, out_ID, addColor);
+
+
+            // function to get ordered degreeData
+            function orderDegreeData(d, degree_nameList){
+                  var preDegreeData = courseParserLimit(d, degree_nameList);
+
+                  // ordered DegreeData:
+                  var degree_list = ["Less than Secondary", 
+                                     "Secondary",
+                                     "Bachelor's",
+                                     "Master's",
+                                     "Doctorate"];
+                  var id_array = [];
+                  for (var p = 0; p < preDegreeData.length; p++){
+                    id_array[preDegreeData[p].Short] = p;
+                  };
+
+                  var DegreeData = [];
+                  for (var p = 0; p<degree_list.length; p++) {
+                    var relate_id = Object.keys(id_array).indexOf(degree_list[p]);
+                    if (relate_id == -1){
+                      // no such field, add the field count as 0
+                      DegreeData[p] = {
+                        "Count": 0,
+                        "Long": degree_list[p],
+                        "Short": degree_list[p]
+                      }
+                    } else {
+                      DegreeData[p] = preDegreeData[relate_id];
+                    };
+                  }; // end of for loop
+                  allDegree.push(DegreeData);
+
+                  return DegreeData;
+          }; //end of orderDegreeData               
+
+        }; // end of plotBars
+
+        // run#1
+        function act_days(){ 
+            plotCircle.fieldName(fieldNames[1])
+                      .fillColor(otherColor) 
+                      .selectCountry(nativeCountries);
+
+            // change heading          
+            d3.select('.main_text').text("Language has no effect on their activities");
+            // change the color of title and legends to green
+            d3.select('.remark')
+              .style('color',otherColor); 
+            // show legends
+            d3.select('#native').style('color','red');
+            d3.select('#change').select('.legendCircle').style('background','red');
+            d3.select('#nonnative').style('color',otherColor);
+            d3.select('#others').select('.legendCircle').style('background',otherColor);
+        }; // end of act_days
+
+        // run#2
+        function watch_videos(){
+          // change points
+          plotCircle.fieldName(fieldNames[2])
+                      .fillColor(otherColor) 
+                      .selectCountry(nativeCountries);
+
+
+        }; // end of watch_videos
+        // run#3
+        function post_forums(){
+          plotCircle.fieldName(fieldNames[3])
+                      .fillColor(otherColor) 
+                      .selectCountry(nativeCountries);
+        }; // end of post_forums
+        
+        // run#4
+        function global_age(){
+          // hide legends
+          d3.select('#native').style('color','white');
+          d3.select('#nonnative').style('color','white');
+          d3.selectAll('.legendCircle').style('background','white');
+
+          // replace heading and title
+          d3.select(".main_text")
+            .text("Age of students center around");
+          d3.select(".remark")
+            .text("20-30")
+            .style('color',selectedColor)
+            .style('font-size','22px');
+
+          // replace all points with same size and color
+          plotCircle.global_circle(8);
+
+          // distribution title
+          d3.select('#age').append('h6')
+              .attr('class','dist_title').text('Age Distribution');
+
+          //// plot histogram
+          // remove before
+          d3.select('#degree').select('.wholeGraph').remove();
+          d3.select('#course').select('.wholeGraph').remove();
+          // add histogram
+          var data_his = parser(statistic_data);
+          var hist_fun = hist()
+                            .width_svg(his_width)
+                            .height_svg(his_height)
+                            .binsize(5)
+                            .fillColor(GlobalColor)
+                            .minbin(0)
+                            .maxbin(80)
+                            .data(data_his)
+                            .highlight(num_highlight);            
+          d3.select('#age').call(hist_fun);
+
+
+
+        }; // end of global_age
+
+        // run#5
+        function global_degree(){
+          // replace heading and title
+          d3.select(".main_text")
+            .text("Students usually have degrees of");
+          d3.select(".remark")
+            .html("<span style='color:selectedColor; font-size: 22px'>" +
+                  "Secondary, Bachelor" +
+                  "</span>" + 
+                  "<span style='color:selectedColor; font-size: 18px'>" +
+                  ", or "+ 
+                  "</span>" + 
+                  "<span style='color:selectedColor; font-size: 22px'>"+
+                  "Master"+ 
+                  "</span>");
+
+          // distribution title
+          d3.select('#degree').append('h6')
+              .attr('class','dist_title').text('Degree Distribution');
+
+          ////// make bar plot of Degree 
+          // plot degree info from all data 
+          var allDegree = [];
+          var degree_nameList = {"long": "LoE_DI", "short": "LoE_DI"};
+          var data_degree = courseParserLimit(statistic_data, degree_nameList);
+          allDegree.push(data_degree); 
+          var bar_degree = barChart()
+                            .width_svg(bar_width)
+                            .height_svg(bar_height)
+                            .margin({top:bar_top, 
+                                     right:bar_right, 
+                                     left:bar_left, 
+                                     bottom:bar_bottom})
+                            .data(data_degree);
+          d3.select('#degree').call(bar_degree);   
+          
+
+          // highlight
+          var filtered_data_degree = data_degree.filter(function(degree_filter){
+            return highlight_global_degrees.indexOf(degree_filter.Short) !== -1;
+          });
+
+          var allDegreeBar = barChart()
+                            .width_svg(bar_width)
+                            .height_svg(bar_height)
+                            .margin({top:bar_top, 
+                                      right:bar_right, 
+                                      left:bar_left, 
+                                      bottom:bar_bottom})
+                            .addBar(allDegree,filtered_data_degree,'degree',selectedColor);             
+        };//end of global_degree
+
+        // run#6
+        function global_course(){
+          // replace heading and title
+          d3.select(".main_text")
+            .text("Most popular courses are");
+            
+          d3.select(".remark")
+            .html("<span style='color:selectedColor; font-size: 22px'>" +
+                  "Computer" +
+                  "</span>" + 
+                  "<span style='color:selectedColor; font-size: 18px'>" +
+                  " Courses </span>");
+          
+          // distribution title
+          d3.select('#course').append('h6')
+              .attr('class','dist_title').text('Course Distribution');
+
+          var course_nameList = {"long": "Course Long Title", "short": "Course Short Title"};
+          var data_course = courseParserLimit(statistic_data, course_nameList);    
+          var allCourse = [];
+          allCourse.push(data_course); 
+          // plot course info from all data 
+
+          var bar_course = barChart()
+                            .width_svg(bar_width)
+                            .height_svg(bar_height)
+                            .margin({top:bar_top, 
+                                     right:bar_right, 
+                                     left:bar_left, 
+                                     bottom:bar_bottom})
+                            .data(data_course);
+          d3.select('#course').call(bar_course);  
+          // highlight
+          var filtered_data_couse = data_course.filter(function(course_filter){
+            return highlight_global_courses.indexOf(course_filter.Short) !== -1;
+          });
+ 
+          var allCourseBar = barChart()
+                            .width_svg(bar_width)
+                            .height_svg(bar_height)
+                            .margin({top:bar_top, 
+                                      right:bar_right, 
+                                      left:bar_left, 
+                                      bottom:bar_bottom})
+                            .addBar(allCourse,filtered_data_couse,'course',selectedColor);
+        };//end of global_course
+
+        // run#7
+        function Justice(){
+          // replace title
+
+          d3.select(".main_text")
+            .html("In"+
+                  "<span style='font-size: 26px'> Japan </span>"+
+                  " & " + 
+                  "<span style='font-size: 26px'> China </span>");           
+              
+          d3.select(".remark")
+            .html("<span style='font-size: 26px; color: selectedColor'>"+
+              "Justice </span>"+
+              "<span style='font-size: 18px; color: selectedColor'>"+
+              " is very popular </span>");
+
+          // remove distribution title
+          d3.select('#age').select('.dist_title').remove();
+          // remove age
+          d3.select("#age")
+            .select('.wholeGraph')
+            .remove();
+
+          // update points
+          // replace all points with same size and color
+         // plotCircle.selectCountry(justiceCountries);
+         plotCircle.global_circle(8)
+                  .same_size(1)
+                  .selectCountry(justiceCountries);
+
+          // plot bars with highlights - Japan
+          
+          var opts = {
+            "out_ID": "degree",
+            "type": "course",
+            "selected_country": "Japan",
+            "selectedBar": "JusticeX",
+            "addColor": selectedColor
+          }; //end of opt
+          // add distribution title
+          d3.select('#degree').select('.dist_title').text(opts.selected_country);
+          plotBars(statistic_data, opts);
+
+          // plot bars with highlights - China
+          var opts2 = {
+            "out_ID": "course",
+            "type": "course",
+            "selected_country": "China",
+            "selectedBar": "JusticeX",
+            "addColor": selectedColor
+          }; //end of opt
+          // add distribution title
+          d3.select('#course').select('.dist_title').text(opts2.selected_country);
+          plotBars(statistic_data, opts2); 
+ 
+        };//end of Justice
+
+        // run#8
+        function circuit(){
+          // replace title
+          d3.select(".main_text")
+            .html("In <span style='font-size: 26px'>"+ 
+              " India, Bangladesh, Pakistan, Egypt"+
+              "</span>");
+            
+          d3.select(".remark")
+            .html("<span style='font-size: 26px; color: selectedColor'>"+
+                  "Circuits and electronics</span>"+
+                  "<span style='font-size: 18px; color: selectedColor'>"+
+                  " is very popular </span>");
+  
+          // update points
+         // plotCircle.selectCountry(circuitCountries);
+         plotCircle.global_circle(8)
+                  .same_size(1)
+                  .selectCountry(circuitCountries);
+
+          // plot bars with highlights - India         
+          var opts = {
+            "out_ID": "degree",
+            "type": "course",
+            "selected_country": "India",
+            "selectedBar": "Circuits",
+            "addColor": selectedColor
+          }; //end of opt
+          // add distribution title
+          d3.select('#degree').select('.dist_title').text(opts.selected_country);
+          plotBars(statistic_data, opts);
+
+          // plot bars with highlights - Egypt
+          var opts2 = {
+            "out_ID": "course",
+            "type": "course",
+            "selected_country": "Egypt",
+            "selectedBar": "Circuits",
+            "addColor": selectedColor
+          }; //end of opt
+          // add distribution title
+          d3.select('#course').select('.dist_title').text(opts2.selected_country);
+          plotBars(statistic_data, opts2); 
+ 
+        };//end of circuit
+
+        // run#9
+        function health(){
+          // replace title
+          d3.select(".main_text")
+            .html("In <span style='font-size: 26px'>"+ 
+              " Nigeria, Egypt "+
+              "</span>");
+              
+            
+          d3.select(".remark")
+            .html("<span style='font-size: 26px; color: selectedColor'>"+
+                "Health related </span>"+
+                "<span style='font-size: 18px; color: selectedColor'>"+
+                "courses are very popular </span>"); 
+  
+          // update points
+         // plotCircle.selectCountry(healthCountries);
+         plotCircle.global_circle(8)
+                  .same_size(1)
+                  .selectCountry(healthCountries);
+
+          // plot bars with highlights - Nigeria
+          var opts = {
+            "out_ID": "degree",
+            "type": "course",
+            "selected_country": "Nigeria",
+            "selectedBar": ["HealthStat","HealthEnv"],
+            "addColor": selectedColor
+          }; //end of opt
+          // add distribution title
+          d3.select('#degree').select('.dist_title').text(opts.selected_country);
+          plotBars(statistic_data, opts);
+
+          // plot bars with highlights - Egypt
+          var opts2 = {
+            "out_ID": "course",
+            "type": "course",
+            "selected_country": "Egypt",
+            "selectedBar": ["HealthStat","HealthEnv"],
+            "addColor": selectedColor
+          }; //end of opt
+           // add distribution title
+          d3.select('#course').select('.dist_title').text(opts2.selected_country);
+          plotBars(statistic_data, opts2); 
+ 
+        };//end of health
+
+        // run#10
+        function Greek(){
+          // replace title
+          d3.select(".main_text")
+            .html("In <span style='font-size: 26px'>"+ 
+              " Greece "+
+              "</span>");
+                     
+          d3.select(".remark")
+            .html("<span style='font-size: 26px; color: selectedColor'>"+
+                  "The ancient greek heros</span>"+
+                  "<span style='font-size: 18px; color: selectedColor'>"+
+                  " is very popular </span>");  
+             
+          // remove distribution title
+          d3.select('#course').select('.dist_title').remove();
+          // remove position3 (#course)
+          d3.select("#course")
+            .select('.wholeBar')
+            .remove();
+    
+          // update points
+          // plotCircle.selectCountry(GreekCountries);
+          plotCircle.global_circle(8)
+                  .same_size(1)
+                  .selectCountry(GreekCountries);
+
+          // plot bars with highlights - Greece
+          var opts = {
+            "out_ID": "degree",
+            "type": "course",
+            "selected_country": "Greece",
+            "selectedBar": "HeroesX",
+            "addColor": selectedColor
+          }; //end of opt
+          // add distribution title
+          d3.select('#degree').select('.dist_title').text(opts.selected_country);
+          plotBars(statistic_data, opts);
+          
+        };//end of Greek
+
+
+
+        // run#last
+        function lastFun(){
+          // show legends
+          d3.select('#native').style('color','red');
+          d3.select('#change').select('.legendCircle').style('background','red');
+          d3.select('#nonnative').style('color',otherColor);
+          d3.select('#others').select('.legendCircle').style('background',otherColor);
+
+          // show instruction of click
+          d3.select('#explore').text("Click Country or Age to explore");
+
+          // remove position2 (#degree)
+          d3.select("#degree")
+            .select('.wholeBar')
+            .remove();
+
+          // plot registered
+          plotCircle.fieldName(fieldNames[1])
+                    .fillColor(otherColor) // change color:fillColors[fieldNames[j]]
+                    .same_size(0)
+                    .selectCountry(nativeCountries);
+
+          // update title and headings
+           d3.select(".main_text") 
+            .text("Find out what courses people of your age are taking!");
+              
+            
+          d3.select(".remark")
+            .html("<span style='font-size: 18px; color: steelblue'>"+
+              "By clicking </span>"+
+              "<span style='font-size: 26px; color: steelblue'> Country</span>"+
+              "<span style='font-size: 18px; color: steelblue'> or </span>"+
+              "<span style='font-size: 26px; color: steelblue'> Age</span>"); 
+           
+          interact();
+
+        };// end of last
+
+        function interact(){
+        //// interaction with clicking the buttons (after animation)
+
+            // plot whole histogram
+            d3.select('#age').append('h6')
+              .attr('class','dist_title').text('Age Distribution');
+            d3.select('#course').append('h6')
+              .attr('class','dist_title').text('Course Distribution');
+            d3.select('#degree').select('.dist_title').text('Degree Distribution');
+            plotDist(statistic_data, []);
+     
+            // add button
+            d3.select('#global')
+              .text('Back to Global data')
+              .style('background-color','green');
+            d3.select('#country_click')
+              .text('Global data')
+              .style('background-color','blue');
+
+            // first add buttons
+            var buttons = d3.select("#world_map").append("div")
+                        .attr("class", "activity_buttons")
+                        .selectAll("div")
+                        .data(fieldNames)
+                        .enter()
+                        .append("div")
+                        .text(function(d) {
+                            return fieldRelate[d];
+                        });
+
+            d3.select('.activity_buttons')
+              .insert("h4",":first-child")
+              .text('Review the fields again');
+
+            d3.select('#year_activity')
+              .text('activity of the year');
+
+            // show hand as pointer
+              buttons.on({
+                "mouseover": function(d) {
+                  d3.select(this).style("cursor", "pointer")
+                },
+                "mouseout": function(d) {
+                  d3.select(this).style("cursor", "")
+                }
+              });
+            his_interaction();
+
+          function his_interaction(){
+            var bubbles = d3.select('.bubble').selectAll('.point, .selectedPoint');
+
+          // responses to click the circles
+            bubbles.on( 
+              "click", function(d_click) {
+                    // reset the color of every circle
+                    var allPoints = document.getElementsByClassName('point');
+                    var originalColor = allPoints[0].style.fill;
+                    var originalOpacity = allPoints[0].style.opacity;
+
+                    var allPointsSelected = document.getElementsByClassName('selectedPoint');
+                    var originalColorSelected = allPointsSelected[0].style.fill;
+                    var originalOpacitySelected = allPointsSelected[0].style.opacity;
+
+                    d3.select(".bubble")
+                      .selectAll(".point")
+                      .transition()
+                      .duration(500)
+                      .style("fill", originalColor)
+                      .style('opacity', originalOpacity);
+
+                    d3.select(".bubble")
+                      .selectAll(".selectedPoint")
+                      .transition()
+                      .duration(500)
+                      .style("fill", originalColorSelected)
+                      .style('opacity', originalOpacitySelected);
+
+                    // highlight the selected circle
+                    d3.select(this)
+                      .transition()
+                      .duration(500)
+                      .style("fill", "blue")
+                      .style("opacity",1);
+
+                    // remove the highlight of global_button
+                    d3.select('#country_click')
+                      .transition()
+                      .duration(500)
+                      .text(d_click.country_name)
+                      .style("color", "white")
+                      .style("background", 'blue');
+
+                //// plot all bar plots and histograms
+                
+                    // remove plots
+                    d3.select('#age').select('svg').remove();
+                    d3.select('#degree').select('svg').remove(); 
+                    d3.select('#course').select('svg').remove();
+                    // make new plot
+                    plotDist(statistic_data, d_click.country_name);
+                
+        ///// go back to plot histograms from all data
+            global_button = d3.select('#global');
+                // show hand as pointer
+            global_button.on({
+                "mouseover": function(d) {
+                  d3.select(this).style("cursor", "pointer")
+                },
+                "mouseout": function(d) {
+                  d3.select(this).style("cursor", "")
+                }
+              });
+
+            // responses to click the buttons
+            global_button.on( 
+              "click", function(d) {
+                  // recover the color of all points
+                  d3.select(".bubble")
+                      .selectAll(".point")
+                      .transition()
+                      .duration(500)
+                      .style("fill", originalColor)
+                      .style("opacity",0.5);
+
+                  d3.select(".bubble")
+                      .selectAll(".selectedPoint")
+                      .transition()
+                      .duration(500)
+                      .style("fill", originalColorSelected)
+                      .style('opacity', originalOpacitySelected);
+
+                  // change the color of global_button
+                  d3.select('#country_click')
+                    .transition()
+                    .duration(500)
+                    .text('Global data')
+                    .style("background", "blue")
+                    .style("color", "white");
+
+                    // plot  
+                    // remove plots
+                    d3.select('#age').select('svg').remove();
+                    d3.select('#degree').select('svg').remove(); 
+                    d3.select('#course').select('svg').remove();
+                    // make new plot
+                    plotDist(statistic_data, []);
+                }); // end of global_button click  
+          }); // end of bubbles.on-click 
+        }; // end of his_interaction
+
+
+            // responses to click the buttons
+            buttons.on( 
+              "click", function(d) {
+                    // reset the color of every button
+                    if (d == 'registered'){
+                      changeColor = 'steelblue';
+                    } else {
+                      changeColor = otherColor;
+                    };
+
+                    d3.select(".activity_buttons")
+                      .selectAll("div")
+                      .transition()
+                      .duration(500)
+                      .style("color", "black")
+                      .style("background", "rgb(251, 201, 127)");
+
+                    // highlight the selected button
+                    d3.select(this)
+                      .transition()
+                      .duration(500)
+                      .style("background", changeColor) // change color: fillColors[d]
+                      .style("color", "white"); 
+
+                    plotCircle.fieldName(d)
+                              .fillColor(changeColor) // change color: fillColors[d]
+                              .selectCountry(nativeCountries);
+                    d3.select('.remark')
+                      .style('color',changeColor)
+                      .style('font-size','18px');
+                    
+            //// interaction with clicking the circles on the map (after animation)
+          
+          his_interaction();
+       }); // end of button click
+             
+   }; // end of interact
+   ///////////// end of animation functions ///////////
+    /// list of functions to run animation ////
+        // var functionsList = [interact];
+        var functionsList = [act_days, watch_videos, post_forums, global_age, global_degree, global_course, Justice, circuit, health, Greek, lastFun];
+ 
+        //animation 
+        var circle_interval = setInterval(runFunctions, playSpeed);
+
+        var i = 0;
+        function runFunctions(){
+          functionsList[i]();
+          i++;
+          if (i == functionsList.length){
+            clearInterval(circle_interval);
+          }; // end of if : after animation
+
+        }; // end of runFunctions
+
+
+        ////// parse the data
+  //// functions used in histogram 
+    // transform age into floating number 
+    function parser(d) {
+      var newList = [];
+      d.forEach(function(d){
+        newList.push(+d["Age"]) ;
+      })
+        return newList;
+    }
+
+  //// functions used in bar plot
+    function courseParserLimit(d, options) {
+        var long = options.long;
+        var short = options.short;
+        var chosen_age = options.age;
+        var chosen_degree = options.degree;
+        var longList = [];
+        var shortList = [];
+        var countList = [];
+        d.forEach(function(d){
+          if (d.Age == chosen_age || chosen_age == undefined){
+                    if (longList.indexOf(d[long]) == -1) {
+                      longList.push(d[long])
+                      shortList.push(d[short])
+                      countList.push(1)
+                        }
+                var countIndex = longList.indexOf(d[long]);
+                countList[countIndex] += 1;                 
+            }
+            
+        });
+
+        var courseList = [];
+        for (var i =0; i <countList.length; i += 1) {
+          var courseTemp = {
+            "Long": longList[i],
+            "Short": shortList[i],
+            "Count": countList[i]
+          };
+          courseList.push(courseTemp)
+        }
+
+        return courseList;    
+      } // end of courseParser
+     
+
+
+
+  function plotDist(alldata, selected_country){
+
+    if (selected_country.length > 0){
+      var d = alldata.filter(function(d_filtering) {
+                    return d_filtering["Country"] === selected_country;
+                });
+    } else {
+      var d = alldata; // no filtering
+    };
+
+
+
+ ////// make histogram of Age  
+    // d3.select('#age').append('h4').text('Age Distribution');
+    var hisData = parser(d);
+    var histfun = hist()
+                  .width_svg(his_width)
+                  .height_svg(his_height)
+                  .binsize(1)
+                  .data(hisData);            
+    d3.select('#age').call(histfun);
+
+            //// interaction with Age histogram          
+            // response to click age bin
+            var hist_bins = d3.select("#age").selectAll(".bar");  
+            hist_bins.on({
+                "mouseover": function(d) {
+                  d3.select(this).style("cursor", "pointer")
+                },
+                "mouseout": function(d) {
+                  d3.select(this).style("cursor", "")
+                }
+              });
+            hist_bins.on("click", function(d2) {
+                    // only the selected age bin changes color to red
+                    d3.select("#age")
+                      .selectAll(".bin")
+                      .transition()
+                      .duration(100)
+                      .style("fill", 'steelblue');
+
+                    d3.select(this)
+                      .select('.bin')
+                      .transition()
+                      .duration(100)
+                      .style('fill',selectedColor);
+    
+                     // Choose another Age bin
+                     // reset the color of degree and course
+                     d3.select('#degree')
+                       .selectAll(".ageDegree_bin")
+                       .remove();
+
+                     d3.select('#course')
+                       .selectAll(".ageDegree_bin")
+                       .remove();
+
+                    // plot new degree bar 
+                    
+                    var nameList = {"long": "LoE_DI", 
+                                    "short": "LoE_DI", 
+                                    'age': d2.x_value};
+                    var newDegreeData = courseParserLimit(d, nameList);
+                    var allDegreeBar = barChart()
+                                      .width_svg(bar_width)
+                                      .height_svg(bar_height)
+                                      .margin({top:bar_top, 
+                                               right:bar_right, 
+                                               left:bar_left, 
+                                               bottom:bar_bottom})
+                                      .addBar(allDegree,newDegreeData,'degree','#f2760c');
+
+                    // plot new course bar 
+                    
+                    var nameList = {"long": "Course Long Title", 
+                                    "short": "Course Short Title", 
+                                    'age': d2.x_value};
+                    var newCourseData = courseParserLimit(d, nameList);
+                    var allCourseBar = barChart()
+                                      .width_svg(bar_width)
+                                      .height_svg(bar_height)
+                                      .margin({top:bar_top, 
+                                               right:bar_right, 
+                                               left:bar_left, 
+                                               bottom:bar_bottom})
+                                      .addBar(allCourse,newCourseData,'course','#f2760c');
+     
+      }); // end of hist_bins.on for chosing age bin
+    ////// end of histogram
+  //// save degree info from all data  
+    var allDegree = [];
+    var degree_nameList = {"long": "LoE_DI", "short": "LoE_DI"};
+
+    // function to get ordered degreeData
+    function orderDegreeData(d, degree_nameList){
+          var preDegreeData = courseParserLimit(d, degree_nameList);
+
+          // ordered DegreeData:
+          var degree_list = ["Less than Secondary", 
+                             "Secondary",
+                             "Bachelor's",
+                             "Master's",
+                             "Doctorate"];
+          var id_array = [];
+          for (var p = 0; p < preDegreeData.length; p++){
+            id_array[preDegreeData[p].Short] = p;
+          };
+
+          var DegreeData = [];
+          for (var p = 0; p<degree_list.length; p++) {
+            var relate_id = Object.keys(id_array).indexOf(degree_list[p]);
+            if (relate_id == -1){
+              // no such field, add the field count as 0
+              DegreeData[p] = {
+                "Count": 0,
+                "Long": degree_list[p],
+                "Short": degree_list[p]
+              }
+            } else {
+              DegreeData[p] = preDegreeData[relate_id];
+            };
+          }; // end of for loop
+          allDegree.push(DegreeData);
+
+          return DegreeData;
+  }; //end of orderDegreeData
+      
+    ////// make bar plot of Degree 
+    // get data
+    var DegreeData = orderDegreeData(d, degree_nameList);
+    // plot degree info from all data 
+    var updateDegree = barChart()
+                      .width_svg(bar_width)
+                      .height_svg(bar_height)
+                      .margin({top:bar_top, 
+                               right:bar_right, 
+                               left:bar_left, 
+                               bottom:bar_bottom})
+                      .data(DegreeData);
+    d3.select('#degree').call(updateDegree);  
+
+    //// save course info from all data
+    // functions to get courseData 
+    var allCourse = [];
+    var course_nameList = {"long": "Course Long Title", "short": "Course Short Title"};
+    var CourseData = courseParserLimit(d, course_nameList);
+    allCourse.push(CourseData);     
+     
+    // plot course info from all data 
+    var updateCourse = barChart()
+                      .width_svg(bar_width)
+                      .height_svg(bar_height)
+                      .margin({top:bar_top, 
+                               right:bar_right, 
+                               left:bar_left, 
+                               bottom:bar_bottom})
+                      .data(CourseData);
+    d3.select('#course').call(updateCourse);                   
+
+}; // end of plotDist
+
+}); //end of reading statistics  
+}); // end of reading country-activity  
+}; // end of draw
+                
+  </script>
+</head>
+
+<body>
+	<!-- Starting layout -->
+	<h3 class="main_text">Many nonnative speakers take online courses offered in English.</h3>
+  <div class="mapPlot", id="world_map"></div>
+  <div>
+    <div><span class="back", id='global'></span></div>
+    <div><span class="highlight", id='country_click'></span></div>
+    <div id="explore"></div>
+    <div id='year_activity'></div>
+  </div>
+  <!-- legends -->
+  <div class='legends'>
+    <div id="change">
+      <div class="legendCircle" style="background: white"></div>
+      <div id="native" style="color: white">native English speaker</div>
+    </div>
+    <div id="others">
+      <div class="legendCircle" style="background: white"></div>
+      <div id="nonnative" style="color: white">nonnative English speaker</div>
+    </div>
+  </div>
+  <!--distribution from global data-->
+  <div class="histPlot", id="age"></div>
+  <div class="barPlot", id="degree"></div>
+  <div class="barPlot", id="course"></div>
+  <a href="https://public.tableau.com/s/sites/default/files/media/EdX_2013%20Academic%20Year%20Courses.csv" target="_blank">Data source: EdX 2012-2013</a>
+	<script src="point_revision.js"></script>
+  <script src="bar_revision.js"></script>
+  <script src="hist_revision.js"></script>
+  
+  <!-- function for the whole script-->
+  <script>
+	  d3.json("world_countries.json", draw);
+  </script>
+
+	
+</body>
+</html>
