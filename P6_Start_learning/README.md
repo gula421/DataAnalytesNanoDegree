@@ -1,7 +1,8 @@
 ## Summary
-More and more people are taking online courses now. The goal is to motivate you to start learning with online courses by showing some data to give you some guideline of taking courses. 
+This data visualization shows how many people taking online courses in different countries and their activities. Although the courses are offered in English, the activities of students aren't affected by their native languages. The global data shows that computer courses are the most popular courses. However, it's very interesting that different countries actually have their own preference in the popular courses. For example, the most popular course in Japan and China is "Justice". The most-taken course in Greece is the "Greek heros". In India, Bangladesh, Pakistan and Egypt, "circuits and electronics" are very popular. In Egypt and Nigeria, people take lots of "health related" courses. 
 
-This data visualization shows how many people taking online courses in different countries and their activities. You can also see the age and background distribution of the students and the courses they took. By clicking the bin of your age, you can explore the background of people with your age and see what kind of courses they took. 
+The popular courses actually highly relate to the country's historical background.  
+After the animation, you are able to explore a bit yourself. This interactive interface not only brings a quite different and intersting perspective to know more about the world, but also give you some advices/reference to find courses probably might be interested to you.  You can also see the age and background distribution of the students and the courses they took. You can see these distributions in different countries by clicking the country. By clicking the bin of your age, you can explore the background of people with your age and see what kind of courses they took. 
 
 ## Data sources:
 [edX.org Academic Year 2012-2013](https://public.tableau.com/s/sites/default/files/media/EdX_2013%20Academic%20Year%20Courses.csv)
@@ -21,11 +22,16 @@ The processed data can be found using the link:
 ## Initial design decisions:
 - chart type: world map, histogram and bar plots.
 - visual encodings: 
-  - Sizes of circles reflects the number of registered students and activities.
-  - Different color distinguishes the selected fields.  
-  - Animation first shows the global trend in course taking activities and then interactions are available for further exploration.
+  - Sizes of circles reflects the number of registered students and activities. 
+  - Different color distinguishes the native and nonnative English speakers.
+  - The cirlces are plotted on the map so that you can know the "location",  "activities" and "language" of the country at the same time. 
+  - Animation first shows the global trend in course taking activities and then shows different trend of popular courses in different countries. Finally interactions are available for further exploration.
+  - Animation showing the statistics for different fields or different countries highlight the bin with different color so the audiance can see the important part very fast. 
+  - Histogram was chosen to display the distribution of the age of students because you can have clear understanding about how the age is actually spread. Moreover, this allows further exploration by clicking the certain age bin.
+  - Bar plot was chosen to display the distribution of education background and enrolled courses. The filtered data by the selection of certain age are plotted on top of the unfiltered data with a different color. This allows a easy comparison of the selected population. The values appearing on the hovering of mouse showing the actual number of the field provides further detailed information. 
 - layout/hierarchy: World map on the top of the page and then showing the distribution of age, background (highest degree obtained) and enrolled courses.
-- legends: Hover the mouse on each circle, land and bin to see the actual number of each field.    
+- legends: Hover the mouse on each circle, land and bin to see the actual number of each field.  
+
 
 ## Feedback 
 1. (based on index01.html)
@@ -80,6 +86,18 @@ There seems to be weak connections between the map and the lower 3 plots.
 - Modification (in index10.html):
   -	I added an interaction allowing people to see the distribution of degree, enrolled courses and ages in different countries. By selecting the age bin, you can explore more about the distribution for people with different ages.
   - I also added a heading to make the the interaction for further exploration clear.
+
+8. (based on index_final.html):
+ - A clear finding couldn't be identified in the visualization.
+ - The number of active days per person. Is this the average number of active days per month or for the year 2012 - 2013?
+ - As mentioned above, the language including title can be really effective at communicating your finding. I think that the title could be adjusted once a finding has been identified.
+ - The 'less than secondary' bar in the second chart should come before the 'secondary' bar to have a sequential order.
+
+- Modification (in index_revision.html):
+ - I am showing the findings now with animations in the beginning and then the exploration in the end allows audiences to try themselves.
+ - The average number of active days is for the year 2012-2013. I added a sentence above the buttons to clearify.
+ - All the findings now are labeled with related titles.
+ - The order of the degree are now ordered from lowest to highest.  
 
 
 ## Reference:
